@@ -376,7 +376,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-white">
-                  3
+                  4
                 </div>
                 <CardTitle className="text-base">Score Crediticio</CardTitle>
               </div>
