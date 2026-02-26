@@ -1,5 +1,16 @@
 import { useState, useMemo, useCallback } from "react";
-import { Building2, LogOut, FileSpreadsheet, Upload, CheckCircle, X, Download, Loader2, ChevronRight, FolderOpen } from "lucide-react";
+import {
+  Building2,
+  LogOut,
+  FileSpreadsheet,
+  Upload,
+  CheckCircle,
+  X,
+  Download,
+  Loader2,
+  ChevronRight,
+  FolderOpen,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,9 +32,21 @@ interface UploadedFile {
 }
 
 const CREDIT_TYPES = [
-  { value: "capital_trabajo", label: "Capital de Trabajo", description: "Financiamiento para operaciones del día a día" },
-  { value: "adquisicion_activos", label: "Adquisición de Activos", description: "Compra de maquinaria, equipo o inmuebles" },
-  { value: "proyectos_inversion", label: "Proyectos de Inversión y Crecimiento", description: "Expansión, nuevos mercados o líneas de negocio" },
+  {
+    value: "capital_trabajo",
+    label: "Capital de Trabajo",
+    description: "Financiamiento para operaciones del día a día",
+  },
+  {
+    value: "adquisicion_activos",
+    label: "Adquisición de Activos",
+    description: "Compra de maquinaria, equipo o inmuebles",
+  },
+  {
+    value: "proyectos_inversion",
+    label: "Proyectos de Inversión y Crecimiento",
+    description: "Expansión, nuevos mercados o líneas de negocio",
+  },
 ];
 
 const Dashboard = ({ onLogout }: DashboardProps) => {
@@ -41,7 +64,14 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
   const [generated, setGenerated] = useState(false);
 
   const isComplete = useMemo(() => {
-    return creditType && estadoCuenta.length > 0 && estadoResultados.length > 0 && balanceGeneral.length > 0 && creditScore && !creditScoreError;
+    return (
+      creditType &&
+      estadoCuenta.length > 0 &&
+      estadoResultados.length > 0 &&
+      balanceGeneral.length > 0 &&
+      creditScore &&
+      !creditScoreError
+    );
   }, [creditType, estadoCuenta, estadoResultados, balanceGeneral, creditScore, creditScoreError]);
 
   const completionSteps = useMemo(() => {
@@ -68,20 +98,23 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
     balance: balanceGeneral,
   };
 
-  const handleFileUpload = useCallback(async (type: FileZone, fileList: FileList | null) => {
-    if (!fileList || fileList.length === 0) return;
-    setUploading(type);
-    await new Promise((r) => setTimeout(r, 800));
+  const handleFileUpload = useCallback(
+    async (type: FileZone, fileList: FileList | null) => {
+      if (!fileList || fileList.length === 0) return;
+      setUploading(type);
+      await new Promise((r) => setTimeout(r, 800));
 
-    const newFiles: UploadedFile[] = Array.from(fileList).map((f) => ({ name: f.name, size: f.size, file: f }));
-    setterMap[type]((prev) => [...prev, ...newFiles]);
-    setUploading(null);
+      const newFiles: UploadedFile[] = Array.from(fileList).map((f) => ({ name: f.name, size: f.size, file: f }));
+      setterMap[type]((prev) => [...prev, ...newFiles]);
+      setUploading(null);
 
-    toast({
-      title: "Archivo(s) cargado(s)",
-      description: `${newFiles.length} archivo(s) agregado(s) correctamente.`,
-    });
-  }, [toast]);
+      toast({
+        title: "Archivo(s) cargado(s)",
+        description: `${newFiles.length} archivo(s) agregado(s) correctamente.`,
+      });
+    },
+    [toast],
+  );
 
   const removeFile = (type: FileZone, index: number) => {
     setterMap[type]((prev) => prev.filter((_, i) => i !== index));
@@ -128,7 +161,14 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
       ["Tipo de Crédito", creditLabel, "Registrado"],
       [],
       ["RECOMENDACIÓN"],
-      ["", score >= 700 ? "Aprobación sugerida - Cliente con buen historial crediticio" : score >= 600 ? "Revisión adicional recomendada" : "Se requiere análisis detallado de riesgo"],
+      [
+        "",
+        score >= 700
+          ? "Aprobación sugerida - Cliente con buen historial crediticio"
+          : score >= 600
+            ? "Revisión adicional recomendada"
+            : "Se requiere análisis detallado de riesgo",
+      ],
     ];
 
     const ws = XLSX.utils.aoa_to_sheet(headerData);
@@ -180,8 +220,16 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
                 <Upload className="w-4 h-4 text-primary" />
               </div>
               <p className="text-sm text-muted-foreground">Arrastra o haz clic para subir</p>
-              <p className="text-xs text-muted-foreground/70">.xlsx, .xls, .pdf, .csv — múltiples archivos permitidos</p>
-              <input type="file" multiple className="hidden" accept=".xlsx,.xls,.pdf,.csv" onChange={(e) => handleFileUpload(type, e.target.files)} />
+              <p className="text-xs text-muted-foreground/70">
+                .xlsx, .xls, .pdf, .csv — múltiples archivos permitidos
+              </p>
+              <input
+                type="file"
+                multiple
+                className="hidden"
+                accept=".xlsx,.xls,.pdf,.csv"
+                onChange={(e) => handleFileUpload(type, e.target.files)}
+              />
             </label>
           </div>
         )}
@@ -192,7 +240,12 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
               <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
               <p className="text-xs text-muted-foreground">{formatSize(file.size)}</p>
             </div>
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => removeFile(type, i)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-destructive"
+              onClick={() => removeFile(type, i)}
+            >
               <X className="w-3.5 h-3.5" />
             </Button>
           </div>
@@ -210,9 +263,14 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
             <div className="w-8 h-8 rounded-lg sky-gradient flex items-center justify-center shadow-sm">
               <Building2 className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-bold text-foreground">FinanzaPro</span>
+            <span className="font-bold text-foreground">MasterHelper</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={onLogout} className="text-muted-foreground hover:text-foreground gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onLogout}
+            className="text-muted-foreground hover:text-foreground gap-2"
+          >
             <LogOut className="w-4 h-4" />
             <span className="hidden sm:inline">Salir</span>
           </Button>
@@ -238,13 +296,21 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-primary-foreground">1</div>
+                <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-primary-foreground">
+                  1
+                </div>
                 <CardTitle className="text-base">Tipo de Solicitud Crediticia</CardTitle>
               </div>
               <CardDescription>Selecciona el tipo de financiamiento que necesitas</CardDescription>
             </CardHeader>
             <CardContent>
-              <RadioGroup value={creditType} onValueChange={(v) => { setCreditType(v); if (generated) setGenerated(false); }}>
+              <RadioGroup
+                value={creditType}
+                onValueChange={(v) => {
+                  setCreditType(v);
+                  if (generated) setGenerated(false);
+                }}
+              >
                 {CREDIT_TYPES.map((type) => (
                   <label
                     key={type.value}
@@ -269,7 +335,9 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-primary-foreground">2</div>
+                <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-primary-foreground">
+                  2
+                </div>
                 <CardTitle className="text-base">Estados Financieros</CardTitle>
               </div>
               <CardDescription>Sube los documentos financieros requeridos</CardDescription>
@@ -293,14 +361,18 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-primary-foreground">3</div>
+                <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-primary-foreground">
+                  3
+                </div>
                 <CardTitle className="text-base">Score Crediticio</CardTitle>
               </div>
               <CardDescription>Ingresa el score del buró de crédito (300–850)</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="score" className="text-xs">Puntaje</Label>
+                <Label htmlFor="score" className="text-xs">
+                  Puntaje
+                </Label>
                 <Input
                   id="score"
                   type="number"
@@ -321,11 +393,15 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
                       Number(creditScore) >= 700
                         ? "bg-success/15 text-success border-success/30"
                         : Number(creditScore) >= 600
-                        ? "bg-warning/15 text-warning border-warning/30"
-                        : "bg-destructive/15 text-destructive border-destructive/30"
+                          ? "bg-warning/15 text-warning border-warning/30"
+                          : "bg-destructive/15 text-destructive border-destructive/30"
                     }
                   >
-                    {Number(creditScore) >= 700 ? "Riesgo Bajo" : Number(creditScore) >= 600 ? "Riesgo Medio" : "Riesgo Alto"}
+                    {Number(creditScore) >= 700
+                      ? "Riesgo Bajo"
+                      : Number(creditScore) >= 600
+                        ? "Riesgo Medio"
+                        : "Riesgo Alto"}
                   </Badge>
                 </div>
               )}
@@ -356,11 +432,31 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
               <div className="text-center space-y-1">
                 <p className="text-xs text-muted-foreground">Completa todos los pasos para habilitar la generación</p>
                 <div className="flex flex-wrap justify-center gap-1">
-                  {!creditType && <Badge variant="outline" className="text-xs">Falta: Tipo de solicitud</Badge>}
-                  {estadoCuenta.length === 0 && <Badge variant="outline" className="text-xs">Falta: Estado de cuenta</Badge>}
-                  {estadoResultados.length === 0 && <Badge variant="outline" className="text-xs">Falta: Estado de resultados</Badge>}
-                  {balanceGeneral.length === 0 && <Badge variant="outline" className="text-xs">Falta: Balance general</Badge>}
-                  {(!creditScore || !!creditScoreError) && <Badge variant="outline" className="text-xs">Falta: Score crediticio</Badge>}
+                  {!creditType && (
+                    <Badge variant="outline" className="text-xs">
+                      Falta: Tipo de solicitud
+                    </Badge>
+                  )}
+                  {estadoCuenta.length === 0 && (
+                    <Badge variant="outline" className="text-xs">
+                      Falta: Estado de cuenta
+                    </Badge>
+                  )}
+                  {estadoResultados.length === 0 && (
+                    <Badge variant="outline" className="text-xs">
+                      Falta: Estado de resultados
+                    </Badge>
+                  )}
+                  {balanceGeneral.length === 0 && (
+                    <Badge variant="outline" className="text-xs">
+                      Falta: Balance general
+                    </Badge>
+                  )}
+                  {(!creditScore || !!creditScoreError) && (
+                    <Badge variant="outline" className="text-xs">
+                      Falta: Score crediticio
+                    </Badge>
+                  )}
                 </div>
               </div>
             )}
