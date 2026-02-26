@@ -331,12 +331,28 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
             </CardContent>
           </Card>
 
-          {/* 2. Estados Financieros (grouped) */}
+          {/* 2. Estado de Cuenta */}
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-white">
                   2
+                </div>
+                <CardTitle className="text-base">Estado de Cuenta</CardTitle>
+              </div>
+              <CardDescription>Sube tu(s) estado(s) de cuenta bancario(s)</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FileUploadZone type="cuenta" label="Estado de Cuenta" />
+            </CardContent>
+          </Card>
+
+          {/* 3. Estados Financieros (grouped) */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-white">
+                  3
                 </div>
                 <CardTitle className="text-base">Estados Financieros</CardTitle>
               </div>
@@ -348,8 +364,6 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
                   <FolderOpen className="w-4 h-4" />
                   Documentos requeridos
                 </div>
-                <FileUploadZone type="cuenta" label="Estado de Cuenta" />
-                <div className="border-t border-border" />
                 <FileUploadZone type="estado" label="Estado de Resultados" />
                 <div className="border-t border-border" />
                 <FileUploadZone type="balance" label="Balance General" />
@@ -357,12 +371,12 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
             </CardContent>
           </Card>
 
-          {/* 3. Credit Score */}
+          {/* 4. Credit Score */}
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-white">
-                  3
+                  4
                 </div>
                 <CardTitle className="text-base">Score Crediticio</CardTitle>
               </div>
