@@ -413,7 +413,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
             <Button
               onClick={handleGenerate}
               disabled={!isComplete || generating}
-              className="w-full h-12 sky-gradient text-primary-foreground font-semibold hover:opacity-90 transition-opacity border-0 text-base gap-2 disabled:opacity-40"
+              className="w-full h-12 sky-gradient text-white font-semibold hover:opacity-90 transition-opacity border-0 text-base gap-2 disabled:opacity-40"
             >
               {generating ? (
                 <>
