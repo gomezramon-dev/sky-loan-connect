@@ -41,9 +41,9 @@ const Login = ({ onLogin }: LoginProps) => {
         <div className="glass-card rounded-2xl p-8 shadow-lg">
           <div className="flex flex-col items-center mb-8">
             <div className="w-14 h-14 rounded-xl sky-gradient flex items-center justify-center mb-4 shadow-md">
-              <Building2 className="w-7 h-7 text-sky-foreground" />
+              <Building2 className="w-7 h-7 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">FinanzaPro</h1>
+            <h1 className="text-2xl font-bold text-foreground">MasterHelper</h1>
             <p className="text-sm text-muted-foreground mt-1">Plataforma de Gestión Financiera</p>
           </div>
 
