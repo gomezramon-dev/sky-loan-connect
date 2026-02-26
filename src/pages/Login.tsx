@@ -49,7 +49,9 @@ const Login = ({ onLogin }: LoginProps) => {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-foreground">Correo electrónico</Label>
+              <Label htmlFor="email" className="text-sm font-medium text-foreground">
+                Correo electrónico
+              </Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -65,7 +67,9 @@ const Login = ({ onLogin }: LoginProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-foreground">Contraseña</Label>
+              <Label htmlFor="password" className="text-sm font-medium text-foreground">
+                Contraseña
+              </Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
@@ -90,7 +94,7 @@ const Login = ({ onLogin }: LoginProps) => {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-11 sky-gradient text-sky-foreground font-semibold hover:opacity-90 transition-opacity border-0"
+              className="w-full h-11 sky-gradient text-primary-foreground font-semibold hover:opacity-90 transition-opacity border-0"
             >
               {loading ? (
                 <div className="flex items-center gap-2">
@@ -103,9 +107,7 @@ const Login = ({ onLogin }: LoginProps) => {
             </Button>
           </form>
 
-          <p className="text-center text-xs text-muted-foreground mt-6">
-            Demo: cualquier correo y contraseña válidos
-          </p>
+          <p className="text-center text-xs text-muted-foreground mt-6">Demo: cualquier correo y contraseña válidos</p>
         </div>
       </div>
     </div>
