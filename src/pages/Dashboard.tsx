@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Building2, LogOut, FileSpreadsheet, Upload, CheckCircle, X, Download, Table, Loader2, ChevronRight } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
+import { Building2, LogOut, FileSpreadsheet, Upload, CheckCircle, X, Download, Loader2, ChevronRight, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,89 +29,87 @@ const CREDIT_TYPES = [
 const Dashboard = ({ onLogout }: DashboardProps) => {
   const { toast } = useToast();
 
-  // Form state
   const [creditType, setCreditType] = useState("");
-  const [estadoResultados, setEstadoResultados] = useState<UploadedFile | null>(null);
-  const [balanceGeneral, setBalanceGeneral] = useState<UploadedFile | null>(null);
+  const [estadoCuenta, setEstadoCuenta] = useState<UploadedFile[]>([]);
+  const [estadoResultados, setEstadoResultados] = useState<UploadedFile[]>([]);
+  const [balanceGeneral, setBalanceGeneral] = useState<UploadedFile[]>([]);
   const [creditScore, setCreditScore] = useState("");
   const [creditScoreError, setCreditScoreError] = useState("");
 
-  // UI state
   const [uploading, setUploading] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [generated, setGenerated] = useState(false);
 
   const isComplete = useMemo(() => {
-    return creditType && estadoResultados && balanceGeneral && creditScore && !creditScoreError;
-  }, [creditType, estadoResultados, balanceGeneral, creditScore, creditScoreError]);
+    return creditType && estadoCuenta.length > 0 && estadoResultados.length > 0 && balanceGeneral.length > 0 && creditScore && !creditScoreError;
+  }, [creditType, estadoCuenta, estadoResultados, balanceGeneral, creditScore, creditScoreError]);
 
   const completionSteps = useMemo(() => {
     let done = 0;
     if (creditType) done++;
-    if (estadoResultados) done++;
-    if (balanceGeneral) done++;
+    if (estadoCuenta.length > 0) done++;
+    if (estadoResultados.length > 0) done++;
+    if (balanceGeneral.length > 0) done++;
     if (creditScore && !creditScoreError) done++;
     return done;
-  }, [creditType, estadoResultados, balanceGeneral, creditScore, creditScoreError]);
+  }, [creditType, estadoCuenta, estadoResultados, balanceGeneral, creditScore, creditScoreError]);
 
-  const handleFileUpload = async (type: "estado" | "balance", fileList: FileList | null) => {
-    if (!fileList || !fileList[0]) return;
-    const file = fileList[0];
-    setUploading(type);
+  type FileZone = "cuenta" | "estado" | "balance";
 
-    // Simulate upload delay
-    await new Promise((r) => setTimeout(r, 800));
-
-    const uploaded: UploadedFile = { name: file.name, size: file.size, file };
-
-    if (type === "estado") {
-      setEstadoResultados(uploaded);
-    } else {
-      setBalanceGeneral(uploaded);
-    }
-
-    setUploading(null);
-    toast({
-      title: "Archivo cargado",
-      description: `${file.name} se cargó correctamente.`,
-    });
+  const setterMap: Record<FileZone, React.Dispatch<React.SetStateAction<UploadedFile[]>>> = {
+    cuenta: setEstadoCuenta,
+    estado: setEstadoResultados,
+    balance: setBalanceGeneral,
   };
 
-  const handleDrop = (type: "estado" | "balance", e: React.DragEvent) => {
+  const getterMap: Record<FileZone, UploadedFile[]> = {
+    cuenta: estadoCuenta,
+    estado: estadoResultados,
+    balance: balanceGeneral,
+  };
+
+  const handleFileUpload = useCallback(async (type: FileZone, fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0) return;
+    setUploading(type);
+    await new Promise((r) => setTimeout(r, 800));
+
+    const newFiles: UploadedFile[] = Array.from(fileList).map((f) => ({ name: f.name, size: f.size, file: f }));
+    setterMap[type]((prev) => [...prev, ...newFiles]);
+    setUploading(null);
+
+    toast({
+      title: "Archivo(s) cargado(s)",
+      description: `${newFiles.length} archivo(s) agregado(s) correctamente.`,
+    });
+  }, [toast]);
+
+  const removeFile = (type: FileZone, index: number) => {
+    setterMap[type]((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDrop = (type: FileZone, e: React.DragEvent) => {
     e.preventDefault();
-    if (e.dataTransfer.files.length) {
-      handleFileUpload(type, e.dataTransfer.files);
-    }
+    if (e.dataTransfer.files.length) handleFileUpload(type, e.dataTransfer.files);
   };
 
   const validateScore = (value: string) => {
     setCreditScore(value);
     const num = Number(value);
-    if (!value) {
-      setCreditScoreError("");
-    } else if (isNaN(num) || num < 300 || num > 850) {
-      setCreditScoreError("El score debe estar entre 300 y 850");
-    } else {
-      setCreditScoreError("");
-    }
+    if (!value) setCreditScoreError("");
+    else if (isNaN(num) || num < 300 || num > 850) setCreditScoreError("El score debe estar entre 300 y 850");
+    else setCreditScoreError("");
   };
 
   const handleGenerate = async () => {
     if (!isComplete) return;
     setGenerating(true);
-
-    toast({
-      title: "Generando documento...",
-      description: "Procesando la información proporcionada.",
-    });
-
+    toast({ title: "Generando documento...", description: "Procesando la información proporcionada." });
     await new Promise((r) => setTimeout(r, 2000));
 
-    // Build Excel
     const creditLabel = CREDIT_TYPES.find((t) => t.value === creditType)?.label || creditType;
     const score = Number(creditScore);
 
-    const headerData = [
+    const headerData: (string | number)[][] = [
       ["SOLICITUD DE CRÉDITO"],
       [],
       ["Tipo de Solicitud", creditLabel],
@@ -119,8 +117,9 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
       ["Nivel de Riesgo", score >= 700 ? "Bajo" : score >= 600 ? "Medio" : "Alto"],
       [],
       ["DOCUMENTOS ADJUNTOS"],
-      ["Estado de Resultados", estadoResultados?.name || "N/A"],
-      ["Balance General", balanceGeneral?.name || "N/A"],
+      ["Estado de Cuenta", estadoCuenta.map((f) => f.name).join(", ")],
+      ["Estado de Resultados", estadoResultados.map((f) => f.name).join(", ")],
+      ["Balance General", balanceGeneral.map((f) => f.name).join(", ")],
       [],
       ["ANÁLISIS PRELIMINAR"],
       ["Parámetro", "Valor", "Evaluación"],
@@ -140,17 +139,14 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
 
     setGenerating(false);
     setGenerated(true);
-
-    toast({
-      title: "¡Documento generado!",
-      description: "El archivo Excel se descargó automáticamente.",
-    });
+    toast({ title: "¡Documento generado!", description: "El archivo Excel se descargó automáticamente." });
   };
 
   const handleReset = () => {
     setCreditType("");
-    setEstadoResultados(null);
-    setBalanceGeneral(null);
+    setEstadoCuenta([]);
+    setEstadoResultados([]);
+    setBalanceGeneral([]);
     setCreditScore("");
     setCreditScoreError("");
     setGenerated(false);
@@ -163,6 +159,48 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
     return `${(bytes / 1048576).toFixed(1)} MB`;
   };
 
+  const FileUploadZone = ({ type, label }: { type: FileZone; label: string }) => {
+    const files = getterMap[type];
+    return (
+      <div className="space-y-2">
+        <Label className="text-xs font-medium text-foreground">{label}</Label>
+        {uploading === type ? (
+          <div className="flex flex-col items-center gap-2 p-5 border-2 border-dashed border-primary rounded-xl bg-accent/30">
+            <Loader2 className="w-6 h-6 text-primary animate-spin" />
+            <p className="text-sm text-muted-foreground">Cargando archivo(s)...</p>
+          </div>
+        ) : (
+          <div
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => handleDrop(type, e)}
+            className="border-2 border-dashed border-border hover:border-primary/50 rounded-xl p-5 text-center transition-all hover:bg-accent/20 cursor-pointer"
+          >
+            <label className="cursor-pointer flex flex-col items-center gap-2">
+              <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center">
+                <Upload className="w-4 h-4 text-primary" />
+              </div>
+              <p className="text-sm text-muted-foreground">Arrastra o haz clic para subir</p>
+              <p className="text-xs text-muted-foreground/70">.xlsx, .xls, .pdf, .csv — múltiples archivos permitidos</p>
+              <input type="file" multiple className="hidden" accept=".xlsx,.xls,.pdf,.csv" onChange={(e) => handleFileUpload(type, e.target.files)} />
+            </label>
+          </div>
+        )}
+        {files.map((file, i) => (
+          <div key={i} className="flex items-center gap-3 p-2.5 bg-accent/40 rounded-lg animate-fade-in">
+            <CheckCircle className="w-4 h-4 text-success shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+              <p className="text-xs text-muted-foreground">{formatSize(file.size)}</p>
+            </div>
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => removeFile(type, i)}>
+              <X className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -170,7 +208,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg sky-gradient flex items-center justify-center shadow-sm">
-              <Building2 className="w-4 h-4 text-sky-foreground" />
+              <Building2 className="w-4 h-4 text-primary-foreground" />
             </div>
             <span className="font-bold text-foreground">FinanzaPro</span>
           </div>
@@ -186,13 +224,12 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-foreground">Generador de Solicitud de Crédito</h1>
           <p className="text-sm text-muted-foreground mt-1">Completa la información para generar el documento Excel</p>
-          {/* Progress */}
           <div className="mt-4 space-y-2">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>{completionSteps} de 4 pasos completados</span>
-              <span>{Math.round((completionSteps / 4) * 100)}%</span>
+              <span>{completionSteps} de 5 pasos completados</span>
+              <span>{Math.round((completionSteps / 5) * 100)}%</span>
             </div>
-            <Progress value={(completionSteps / 4) * 100} className="h-2" />
+            <Progress value={(completionSteps / 5) * 100} className="h-2" />
           </div>
         </div>
 
@@ -201,7 +238,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-sky-foreground">1</div>
+                <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-primary-foreground">1</div>
                 <CardTitle className="text-base">Tipo de Solicitud Crediticia</CardTitle>
               </div>
               <CardDescription>Selecciona el tipo de financiamiento que necesitas</CardDescription>
@@ -228,101 +265,35 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
             </CardContent>
           </Card>
 
-          {/* 2. Estado de Resultados */}
+          {/* 2. Estados Financieros (grouped) */}
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-sky-foreground">2</div>
-                <CardTitle className="text-base">Estado de Resultados Financieros</CardTitle>
+                <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-primary-foreground">2</div>
+                <CardTitle className="text-base">Estados Financieros</CardTitle>
               </div>
-              <CardDescription>Sube el archivo con el estado de resultados</CardDescription>
+              <CardDescription>Sube los documentos financieros requeridos</CardDescription>
             </CardHeader>
             <CardContent>
-              {estadoResultados ? (
-                <div className="flex items-center gap-3 p-3 bg-accent/40 rounded-lg animate-fade-in">
-                  <CheckCircle className="w-5 h-5 text-success shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{estadoResultados.name}</p>
-                    <p className="text-xs text-muted-foreground">{formatSize(estadoResultados.size)}</p>
-                  </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => setEstadoResultados(null)}>
-                    <X className="w-4 h-4" />
-                  </Button>
+              <div className="border border-border rounded-xl p-4 space-y-5 bg-secondary/30">
+                <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  <FolderOpen className="w-4 h-4" />
+                  Documentos requeridos
                 </div>
-              ) : uploading === "estado" ? (
-                <div className="flex flex-col items-center gap-2 p-6 border-2 border-dashed border-primary rounded-xl bg-accent/30">
-                  <Loader2 className="w-6 h-6 text-primary animate-spin" />
-                  <p className="text-sm text-muted-foreground">Cargando archivo...</p>
-                </div>
-              ) : (
-                <div
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => handleDrop("estado", e)}
-                  className="border-2 border-dashed border-border hover:border-primary/50 rounded-xl p-6 text-center transition-all hover:bg-accent/20 cursor-pointer"
-                >
-                  <label className="cursor-pointer flex flex-col items-center gap-2">
-                    <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
-                      <Upload className="w-5 h-5 text-primary" />
-                    </div>
-                    <p className="text-sm text-muted-foreground">Arrastra o haz clic para subir</p>
-                    <p className="text-xs text-muted-foreground/70">.xlsx, .xls, .pdf, .csv</p>
-                    <input type="file" className="hidden" accept=".xlsx,.xls,.pdf,.csv" onChange={(e) => handleFileUpload("estado", e.target.files)} />
-                  </label>
-                </div>
-              )}
+                <FileUploadZone type="cuenta" label="Estado de Cuenta" />
+                <div className="border-t border-border" />
+                <FileUploadZone type="estado" label="Estado de Resultados Financieros" />
+                <div className="border-t border-border" />
+                <FileUploadZone type="balance" label="Balance General" />
+              </div>
             </CardContent>
           </Card>
 
-          {/* 3. Balance General */}
+          {/* 3. Credit Score */}
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-sky-foreground">3</div>
-                <CardTitle className="text-base">Balance General</CardTitle>
-              </div>
-              <CardDescription>Sube el archivo con el balance general</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {balanceGeneral ? (
-                <div className="flex items-center gap-3 p-3 bg-accent/40 rounded-lg animate-fade-in">
-                  <CheckCircle className="w-5 h-5 text-success shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{balanceGeneral.name}</p>
-                    <p className="text-xs text-muted-foreground">{formatSize(balanceGeneral.size)}</p>
-                  </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => setBalanceGeneral(null)}>
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              ) : uploading === "balance" ? (
-                <div className="flex flex-col items-center gap-2 p-6 border-2 border-dashed border-primary rounded-xl bg-accent/30">
-                  <Loader2 className="w-6 h-6 text-primary animate-spin" />
-                  <p className="text-sm text-muted-foreground">Cargando archivo...</p>
-                </div>
-              ) : (
-                <div
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => handleDrop("balance", e)}
-                  className="border-2 border-dashed border-border hover:border-primary/50 rounded-xl p-6 text-center transition-all hover:bg-accent/20 cursor-pointer"
-                >
-                  <label className="cursor-pointer flex flex-col items-center gap-2">
-                    <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
-                      <Upload className="w-5 h-5 text-primary" />
-                    </div>
-                    <p className="text-sm text-muted-foreground">Arrastra o haz clic para subir</p>
-                    <p className="text-xs text-muted-foreground/70">.xlsx, .xls, .pdf, .csv</p>
-                    <input type="file" className="hidden" accept=".xlsx,.xls,.pdf,.csv" onChange={(e) => handleFileUpload("balance", e.target.files)} />
-                  </label>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* 4. Credit Score */}
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-sky-foreground">4</div>
+                <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-primary-foreground">3</div>
                 <CardTitle className="text-base">Score Crediticio</CardTitle>
               </div>
               <CardDescription>Ingresa el score del buró de crédito (300–850)</CardDescription>
@@ -366,7 +337,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
             <Button
               onClick={handleGenerate}
               disabled={!isComplete || generating}
-              className="w-full h-12 sky-gradient text-sky-foreground font-semibold hover:opacity-90 transition-opacity border-0 text-base gap-2 disabled:opacity-40"
+              className="w-full h-12 sky-gradient text-primary-foreground font-semibold hover:opacity-90 transition-opacity border-0 text-base gap-2 disabled:opacity-40"
             >
               {generating ? (
                 <>
@@ -386,8 +357,9 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
                 <p className="text-xs text-muted-foreground">Completa todos los pasos para habilitar la generación</p>
                 <div className="flex flex-wrap justify-center gap-1">
                   {!creditType && <Badge variant="outline" className="text-xs">Falta: Tipo de solicitud</Badge>}
-                  {!estadoResultados && <Badge variant="outline" className="text-xs">Falta: Estado de resultados</Badge>}
-                  {!balanceGeneral && <Badge variant="outline" className="text-xs">Falta: Balance general</Badge>}
+                  {estadoCuenta.length === 0 && <Badge variant="outline" className="text-xs">Falta: Estado de cuenta</Badge>}
+                  {estadoResultados.length === 0 && <Badge variant="outline" className="text-xs">Falta: Estado de resultados</Badge>}
+                  {balanceGeneral.length === 0 && <Badge variant="outline" className="text-xs">Falta: Balance general</Badge>}
                   {(!creditScore || !!creditScoreError) && <Badge variant="outline" className="text-xs">Falta: Score crediticio</Badge>}
                 </div>
               </div>
