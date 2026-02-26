@@ -280,7 +280,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
       {/* Main */}
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-foreground">Generador de Solicitud de Crédito</h1>
+          <h1 className="text-2xl font-bold text-foreground">Generador de MasterCliente (parte cuantitativa)</h1>
           <p className="text-sm text-muted-foreground mt-1">Completa la información para generar el documento Excel</p>
           <div className="mt-4 space-y-2">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
