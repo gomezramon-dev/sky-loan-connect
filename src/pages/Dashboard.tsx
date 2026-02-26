@@ -261,7 +261,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg sky-gradient flex items-center justify-center shadow-sm">
-              <Building2 className="w-4 h-4 text-primary-foreground" />
+              <Building2 className="w-4 h-4 text-white" />
             </div>
             <span className="font-bold text-foreground">MasterHelper</span>
           </div>
@@ -296,7 +296,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-primary-foreground">
+                <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-white">
                   1
                 </div>
                 <CardTitle className="text-base">Tipo de Solicitud Crediticia</CardTitle>
@@ -335,7 +335,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-primary-foreground">
+                <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-white">
                   2
                 </div>
                 <CardTitle className="text-base">Estados Financieros</CardTitle>
@@ -361,7 +361,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-primary-foreground">
+                <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-white">
                   3
                 </div>
                 <CardTitle className="text-base">Score Crediticio</CardTitle>
@@ -427,39 +427,6 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
                 </>
               )}
             </Button>
-
-            {!isComplete && !generated && (
-              <div className="text-center space-y-1">
-                <p className="text-xs text-muted-foreground">Completa todos los pasos para habilitar la generación</p>
-                <div className="flex flex-wrap justify-center gap-1">
-                  {!creditType && (
-                    <Badge variant="outline" className="text-xs">
-                      Falta: Tipo de solicitud
-                    </Badge>
-                  )}
-                  {estadoCuenta.length === 0 && (
-                    <Badge variant="outline" className="text-xs">
-                      Falta: Estado de cuenta
-                    </Badge>
-                  )}
-                  {estadoResultados.length === 0 && (
-                    <Badge variant="outline" className="text-xs">
-                      Falta: Estado de resultados
-                    </Badge>
-                  )}
-                  {balanceGeneral.length === 0 && (
-                    <Badge variant="outline" className="text-xs">
-                      Falta: Balance general
-                    </Badge>
-                  )}
-                  {(!creditScore || !!creditScoreError) && (
-                    <Badge variant="outline" className="text-xs">
-                      Falta: Score crediticio
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            )}
 
             {generated && (
               <Card className="border-success/30 bg-success/5 animate-fade-in">
