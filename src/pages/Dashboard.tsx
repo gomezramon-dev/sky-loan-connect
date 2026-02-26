@@ -350,7 +350,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
                 </div>
                 <FileUploadZone type="cuenta" label="Estado de Cuenta" />
                 <div className="border-t border-border" />
-                <FileUploadZone type="estado" label="Estado de Resultados Financieros" />
+                <FileUploadZone type="estado" label="Estado de Resultados" />
                 <div className="border-t border-border" />
                 <FileUploadZone type="balance" label="Balance General" />
               </div>
