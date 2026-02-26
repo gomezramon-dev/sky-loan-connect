@@ -94,7 +94,7 @@ const Login = ({ onLogin }: LoginProps) => {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-11 sky-gradient text-primary-foreground font-semibold hover:opacity-90 transition-opacity border-0"
+              className="w-full h-11 sky-gradient text-white font-semibold hover:opacity-90 transition-opacity border-0"
             >
               {loading ? (
                 <div className="flex items-center gap-2">
