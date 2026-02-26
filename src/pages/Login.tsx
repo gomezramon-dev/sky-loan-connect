@@ -44,7 +44,7 @@ const Login = ({ onLogin }: LoginProps) => {
               <Building2 className="w-7 h-7 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-foreground">MasterHelper</h1>
-            <p className="text-sm text-muted-foreground mt-1">Plataforma de Gestión Financiera</p>
+            <p className="text-sm text-muted-foreground mt-1">Herramienta para la creación del Master Cliente</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
