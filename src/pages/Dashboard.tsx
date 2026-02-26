@@ -399,26 +399,6 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
                 />
                 {creditScoreError && <p className="text-xs text-destructive">{creditScoreError}</p>}
               </div>
-              {creditScore && !creditScoreError && (
-                <div className="flex items-center gap-2 animate-fade-in">
-                  <Badge
-                    variant="outline"
-                    className={
-                      Number(creditScore) >= 700
-                        ? "bg-success/15 text-success border-success/30"
-                        : Number(creditScore) >= 600
-                          ? "bg-warning/15 text-warning border-warning/30"
-                          : "bg-destructive/15 text-destructive border-destructive/30"
-                    }
-                  >
-                    {Number(creditScore) >= 700
-                      ? "Riesgo Bajo"
-                      : Number(creditScore) >= 600
-                        ? "Riesgo Medio"
-                        : "Riesgo Alto"}
-                  </Badge>
-                </div>
-              )}
             </CardContent>
           </Card>
 
