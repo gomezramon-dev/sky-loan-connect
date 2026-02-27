@@ -357,8 +357,58 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
               </div>
               <CardDescription>Sube tu(s) estado(s) de cuenta bancario(s)</CardDescription>
             </CardHeader>
-            <CardContent>
-              <FileUploadZone type="cuenta" label="Estado de Cuenta" />
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-foreground">Año del Estado de Cuenta</Label>
+                <Input
+                  type="number"
+                  placeholder="Ej: 2024"
+                  min={2000}
+                  max={2099}
+                  value={estadoCuentaAnio}
+                  onChange={(e) => setEstadoCuentaAnio(e.target.value)}
+                  className="h-10 bg-secondary/50 max-w-[200px]"
+                />
+              </div>
+
+              <FileUploadZone type="cuenta" label="Archivos del Estado de Cuenta" />
+
+              {estadoCuenta.length > 0 && (
+                <div className="space-y-3 border border-border rounded-xl p-4 bg-secondary/30">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Detalle por archivo</p>
+                  {estadoCuenta.map((file, i) => (
+                    <div key={i} className="space-y-2 p-3 bg-accent/30 rounded-lg">
+                      <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Banco</Label>
+                          <Input
+                            placeholder="Nombre del banco"
+                            value={file.banco || ""}
+                            onChange={(e) => updateCuentaFile(i, "banco", e.target.value)}
+                            className="h-9 bg-background"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Moneda</Label>
+                          <Select
+                            value={file.moneda || ""}
+                            onValueChange={(v) => updateCuentaFile(i, "moneda", v)}
+                          >
+                            <SelectTrigger className="h-9 bg-background">
+                              <SelectValue placeholder="Seleccionar" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pesos">Pesos (MXN)</SelectItem>
+                              <SelectItem value="dolares">Dólares (USD)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
