@@ -84,7 +84,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
   const completionSteps = useMemo(() => {
     let done = 0;
     if (creditType) done++;
-    if (estadoCuenta.length > 0) done++;
+    if (estadoCuentaComplete) done++;
     if (estadoResultados.length > 0) done++;
     if (balanceGeneral.length > 0) done++;
     if (creditScore && !creditScoreError) done++;
