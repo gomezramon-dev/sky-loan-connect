@@ -89,7 +89,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
     if (balanceGeneral.length > 0) done++;
     if (creditScore && !creditScoreError) done++;
     return done;
-  }, [creditType, estadoCuenta, estadoResultados, balanceGeneral, creditScore, creditScoreError]);
+  }, [creditType, estadoCuentaComplete, estadoResultados, balanceGeneral, creditScore, creditScoreError]);
 
   type FileZone = "cuenta" | "estado" | "balance";
 
