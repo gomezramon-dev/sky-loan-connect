@@ -152,8 +152,8 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
     );
     setUploading(null);
     toast({
-      title: "Archivo(s) cargado(s)",
-      description: `${newFiles.length} archivo(s) agregado(s).`,
+      title: "Archivo cargado",
+      description: `${newFile.name} agregado.`,
     });
   };
 
