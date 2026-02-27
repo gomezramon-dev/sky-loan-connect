@@ -137,16 +137,16 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
     setUploading(key);
     await new Promise((r) => setTimeout(r, 600));
 
-    const newFiles: UploadedFile[] = Array.from(fileList).map((f) => ({
-      name: f.name,
-      size: f.size,
-      file: f,
-    }));
+    const newFile: UploadedFile = {
+      name: fileList[0].name,
+      size: fileList[0].size,
+      file: fileList[0],
+    };
 
     onChange(
       periods.map((p) =>
         p.id === periodId
-          ? { ...p, [docType]: [...p[docType], ...newFiles] }
+          ? { ...p, [docType]: [newFile] }
           : p
       )
     );
