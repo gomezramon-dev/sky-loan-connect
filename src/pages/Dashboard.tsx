@@ -97,18 +97,14 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
     return done;
   }, [creditType, estadoCuentaComplete, financialsComplete, creditScore, creditScoreError]);
 
-  type FileZone = "cuenta" | "estado" | "balance";
+  type FileZone = "cuenta";
 
   const setterMap: Record<FileZone, React.Dispatch<React.SetStateAction<UploadedFile[]>>> = {
     cuenta: setEstadoCuenta,
-    estado: setEstadoResultados,
-    balance: setBalanceGeneral,
   };
 
   const getterMap: Record<FileZone, UploadedFile[]> = {
     cuenta: estadoCuenta,
-    estado: estadoResultados,
-    balance: balanceGeneral,
   };
 
   const handleFileUpload = useCallback(
