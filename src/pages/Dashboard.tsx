@@ -129,9 +129,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
   };
 
   const updateCuentaFile = (index: number, field: "banco" | "moneda", value: string) => {
-    setEstadoCuenta((prev) =>
-      prev.map((f, i) => (i === index ? { ...f, [field]: value } : f))
-    );
+    setEstadoCuenta((prev) => prev.map((f, i) => (i === index ? { ...f, [field]: value } : f)));
   };
 
   const handleDrop = (type: FileZone, e: React.DragEvent) => {
@@ -248,23 +246,6 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
             </label>
           </div>
         )}
-        {files.map((file, i) => (
-          <div key={i} className="flex items-center gap-3 p-2.5 bg-accent/40 rounded-lg animate-fade-in">
-            <CheckCircle className="w-4 h-4 text-success shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
-              <p className="text-xs text-muted-foreground">{formatSize(file.size)}</p>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-muted-foreground hover:text-destructive"
-              onClick={() => removeFile(type, i)}
-            >
-              <X className="w-3.5 h-3.5" />
-            </Button>
-          </div>
-        ))}
       </div>
     );
   };
@@ -375,16 +356,16 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
 
               {estadoCuenta.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Detalle por archivo</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    Detalle por archivo
+                  </p>
                   {estadoCuenta.map((file, i) => {
                     const isFilledOut = file.banco && file.moneda;
                     return (
                       <div
                         key={i}
                         className={`rounded-xl border transition-all ${
-                          isFilledOut
-                            ? "border-success/40 bg-success/5"
-                            : "border-border bg-card"
+                          isFilledOut ? "border-success/40 bg-success/5" : "border-border bg-card"
                         }`}
                       >
                         <div className="flex items-center gap-3 px-4 py-3 border-b border-border/50">
@@ -396,7 +377,10 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
                             <p className="text-xs text-muted-foreground">{formatSize(file.size)}</p>
                           </div>
                           {isFilledOut && (
-                            <Badge variant="outline" className="border-success/50 text-success bg-success/10 text-xs shrink-0">
+                            <Badge
+                              variant="outline"
+                              className="border-success/50 text-success bg-success/10 text-xs shrink-0"
+                            >
                               Completo
                             </Badge>
                           )}
@@ -421,10 +405,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
                           </div>
                           <div className="space-y-1.5">
                             <Label className="text-xs text-muted-foreground">Moneda</Label>
-                            <Select
-                              value={file.moneda || ""}
-                              onValueChange={(v) => updateCuentaFile(i, "moneda", v)}
-                            >
+                            <Select value={file.moneda || ""} onValueChange={(v) => updateCuentaFile(i, "moneda", v)}>
                               <SelectTrigger className="h-9 bg-secondary/50">
                                 <SelectValue placeholder="Seleccionar" />
                               </SelectTrigger>
