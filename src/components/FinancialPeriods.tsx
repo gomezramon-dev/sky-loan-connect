@@ -395,7 +395,7 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
           </div>
 
           {newType === "parcial" && (
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 pl-4 sm:pl-6">
               <Label className="text-xs text-muted-foreground">
                 Fecha de corte del periodo parcial
               </Label>
