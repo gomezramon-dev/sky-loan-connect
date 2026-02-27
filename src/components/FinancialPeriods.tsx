@@ -194,24 +194,26 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
           )}
         </div>
 
-        {isUploading ? (
-          <div className="flex items-center gap-2 p-3 border border-dashed border-primary rounded-lg bg-accent/30">
-            <Loader2 className="w-4 h-4 text-primary animate-spin" />
-            <p className="text-xs text-muted-foreground">Cargando...</p>
-          </div>
-        ) : (
-          <label className="flex items-center gap-2 p-3 border border-dashed border-border hover:border-primary/50 rounded-lg cursor-pointer transition-all hover:bg-accent/20">
-            <Upload className="w-3.5 h-3.5 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">
-              Arrastra o haz clic para subir
-            </span>
-            <input
-              type="file"
-              className="hidden"
-              accept=".xlsx,.xls,.pdf,.csv"
-              onChange={(e) => handleFileUpload(periodId, docType, e.target.files)}
-            />
-          </label>
+        {files.length === 0 && (
+          isUploading ? (
+            <div className="flex items-center gap-2 p-3 border border-dashed border-primary rounded-lg bg-accent/30">
+              <Loader2 className="w-4 h-4 text-primary animate-spin" />
+              <p className="text-xs text-muted-foreground">Cargando...</p>
+            </div>
+          ) : (
+            <label className="flex items-center gap-2 p-3 border border-dashed border-border hover:border-primary/50 rounded-lg cursor-pointer transition-all hover:bg-accent/20">
+              <Upload className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">
+                Arrastra o haz clic para subir
+              </span>
+              <input
+                type="file"
+                className="hidden"
+                accept=".xlsx,.xls,.pdf,.csv"
+                onChange={(e) => handleFileUpload(periodId, docType, e.target.files)}
+              />
+            </label>
+          )
         )}
 
         {files.length > 0 && (
