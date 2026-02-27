@@ -190,12 +190,7 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
         <div className="flex items-center justify-between">
           <Label className="text-xs font-medium text-foreground">{label}</Label>
           {files.length > 0 && (
-            <Badge
-              variant="outline"
-              className="border-success/50 text-success bg-success/10 text-[10px]"
-            >
-              {files.length} archivo{files.length > 1 ? "s" : ""}
-            </Badge>
+            <CheckCircle2 className="w-3.5 h-3.5 text-success" />
           )}
         </div>
 
