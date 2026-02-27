@@ -280,10 +280,10 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
           <p className="text-sm text-muted-foreground mt-1">Completa la información para generar el documento Excel</p>
           <div className="mt-4 space-y-2">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>{completionSteps} de 5 pasos completados</span>
-              <span>{Math.round((completionSteps / 5) * 100)}%</span>
+              <span>{completionSteps} de 4 pasos completados</span>
+              <span>{Math.round((completionSteps / 4) * 100)}%</span>
             </div>
-            <Progress value={(completionSteps / 5) * 100} className="h-2" />
+            <Progress value={(completionSteps / 4) * 100} className="h-2" />
           </div>
         </div>
 
