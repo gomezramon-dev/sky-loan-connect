@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -29,6 +30,8 @@ interface UploadedFile {
   name: string;
   size: number;
   file: File;
+  banco?: string;
+  moneda?: "pesos" | "dolares";
 }
 
 const CREDIT_TYPES = [
@@ -53,6 +56,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
   const { toast } = useToast();
 
   const [creditType, setCreditType] = useState("");
+  const [estadoCuentaAnio, setEstadoCuentaAnio] = useState("");
   const [estadoCuenta, setEstadoCuenta] = useState<UploadedFile[]>([]);
   const [estadoResultados, setEstadoResultados] = useState<UploadedFile[]>([]);
   const [balanceGeneral, setBalanceGeneral] = useState<UploadedFile[]>([]);
@@ -63,26 +67,30 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
   const [generating, setGenerating] = useState(false);
   const [generated, setGenerated] = useState(false);
 
+  const estadoCuentaComplete = useMemo(() => {
+    return estadoCuenta.length > 0 && estadoCuentaAnio && estadoCuenta.every((f) => f.banco && f.moneda);
+  }, [estadoCuenta, estadoCuentaAnio]);
+
   const isComplete = useMemo(() => {
     return (
       creditType &&
-      estadoCuenta.length > 0 &&
+      estadoCuentaComplete &&
       estadoResultados.length > 0 &&
       balanceGeneral.length > 0 &&
       creditScore &&
       !creditScoreError
     );
-  }, [creditType, estadoCuenta, estadoResultados, balanceGeneral, creditScore, creditScoreError]);
+  }, [creditType, estadoCuentaComplete, estadoResultados, balanceGeneral, creditScore, creditScoreError]);
 
   const completionSteps = useMemo(() => {
     let done = 0;
     if (creditType) done++;
-    if (estadoCuenta.length > 0) done++;
+    if (estadoCuentaComplete) done++;
     if (estadoResultados.length > 0) done++;
     if (balanceGeneral.length > 0) done++;
     if (creditScore && !creditScoreError) done++;
     return done;
-  }, [creditType, estadoCuenta, estadoResultados, balanceGeneral, creditScore, creditScoreError]);
+  }, [creditType, estadoCuentaComplete, estadoResultados, balanceGeneral, creditScore, creditScoreError]);
 
   type FileZone = "cuenta" | "estado" | "balance";
 
@@ -118,6 +126,12 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
 
   const removeFile = (type: FileZone, index: number) => {
     setterMap[type]((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updateCuentaFile = (index: number, field: "banco" | "moneda", value: string) => {
+    setEstadoCuenta((prev) =>
+      prev.map((f, i) => (i === index ? { ...f, [field]: value } : f))
+    );
   };
 
   const handleDrop = (type: FileZone, e: React.DragEvent) => {
@@ -184,6 +198,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
 
   const handleReset = () => {
     setCreditType("");
+    setEstadoCuentaAnio("");
     setEstadoCuenta([]);
     setEstadoResultados([]);
     setBalanceGeneral([]);
@@ -342,8 +357,58 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
               </div>
               <CardDescription>Sube tu(s) estado(s) de cuenta bancario(s)</CardDescription>
             </CardHeader>
-            <CardContent>
-              <FileUploadZone type="cuenta" label="Estado de Cuenta" />
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-foreground">Año del Estado de Cuenta</Label>
+                <Input
+                  type="number"
+                  placeholder="Ej: 2024"
+                  min={2000}
+                  max={2099}
+                  value={estadoCuentaAnio}
+                  onChange={(e) => setEstadoCuentaAnio(e.target.value)}
+                  className="h-10 bg-secondary/50 max-w-[200px]"
+                />
+              </div>
+
+              <FileUploadZone type="cuenta" label="Archivos del Estado de Cuenta" />
+
+              {estadoCuenta.length > 0 && (
+                <div className="space-y-3 border border-border rounded-xl p-4 bg-secondary/30">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Detalle por archivo</p>
+                  {estadoCuenta.map((file, i) => (
+                    <div key={i} className="space-y-2 p-3 bg-accent/30 rounded-lg">
+                      <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Banco</Label>
+                          <Input
+                            placeholder="Nombre del banco"
+                            value={file.banco || ""}
+                            onChange={(e) => updateCuentaFile(i, "banco", e.target.value)}
+                            className="h-9 bg-background"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Moneda</Label>
+                          <Select
+                            value={file.moneda || ""}
+                            onValueChange={(v) => updateCuentaFile(i, "moneda", v)}
+                          >
+                            <SelectTrigger className="h-9 bg-background">
+                              <SelectValue placeholder="Seleccionar" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pesos">Pesos (MXN)</SelectItem>
+                              <SelectItem value="dolares">Dólares (USD)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
