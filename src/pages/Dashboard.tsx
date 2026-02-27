@@ -20,6 +20,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
+import FinancialPeriods, { type FinancialPeriod } from "@/components/FinancialPeriods";
 
 interface DashboardProps {
   onLogout: () => void;
