@@ -201,8 +201,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
     setCreditType("");
     setEstadoCuentaAnio("");
     setEstadoCuenta([]);
-    setEstadoResultados([]);
-    setBalanceGeneral([]);
+    setFinancialPeriods([]);
     setCreditScore("");
     setCreditScoreError("");
     setGenerated(false);
