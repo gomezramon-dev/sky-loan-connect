@@ -128,6 +128,12 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
     setterMap[type]((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const updateCuentaFile = (index: number, field: "banco" | "moneda", value: string) => {
+    setEstadoCuenta((prev) =>
+      prev.map((f, i) => (i === index ? { ...f, [field]: value } : f))
+    );
+  };
+
   const handleDrop = (type: FileZone, e: React.DragEvent) => {
     e.preventDefault();
     if (e.dataTransfer.files.length) handleFileUpload(type, e.dataTransfer.files);
