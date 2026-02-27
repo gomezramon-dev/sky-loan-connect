@@ -71,7 +71,7 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
   );
 
   const canAddPartial = completeYears.length >= 1;
-  const canAddMore = periods.length < 4; // up to 3 complete + 1 partial
+  const canAddMore = periods.length < 3; // up to 3 periods total
   const usedYears = periods.map((p) => p.year);
 
   const handleAddPeriod = () => {
