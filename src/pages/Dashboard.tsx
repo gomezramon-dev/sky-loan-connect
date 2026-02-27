@@ -426,7 +426,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
             </CardContent>
           </Card>
 
-          {/* 3. Estados Financieros (grouped) */}
+          {/* 3. Estados Financieros */}
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
@@ -435,18 +435,15 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
                 </div>
                 <CardTitle className="text-base">Estados Financieros</CardTitle>
               </div>
-              <CardDescription>Sube los documentos financieros requeridos</CardDescription>
+              <CardDescription>
+                Agrega los periodos fiscales con su Estado de Resultados y Balance General
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="border border-border rounded-xl p-4 space-y-5 bg-secondary/30">
-                <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  <FolderOpen className="w-4 h-4" />
-                  Documentos requeridos
-                </div>
-                <FileUploadZone type="estado" label="Estado de Resultados" />
-                <div className="border-t border-border" />
-                <FileUploadZone type="balance" label="Balance General" />
-              </div>
+              <FinancialPeriods
+                periods={financialPeriods}
+                onChange={setFinancialPeriods}
+              />
             </CardContent>
           </Card>
 
