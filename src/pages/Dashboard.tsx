@@ -198,6 +198,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
 
   const handleReset = () => {
     setCreditType("");
+    setEstadoCuentaAnio("");
     setEstadoCuenta([]);
     setEstadoResultados([]);
     setBalanceGeneral([]);
