@@ -29,6 +29,8 @@ interface UploadedFile {
   name: string;
   size: number;
   file: File;
+  banco?: string;
+  moneda?: "pesos" | "dolares";
 }
 
 const CREDIT_TYPES = [
