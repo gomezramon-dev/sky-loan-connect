@@ -71,7 +71,7 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
   );
 
   const canAddPartial = completeYears.length >= 1;
-  const canAddMore = periods.length < 4; // up to 3 complete + 1 partial
+  const canAddMore = periods.length < 3; // up to 3 periods total
   const usedYears = periods.map((p) => p.year);
 
   const handleAddPeriod = () => {
@@ -137,23 +137,23 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
     setUploading(key);
     await new Promise((r) => setTimeout(r, 600));
 
-    const newFiles: UploadedFile[] = Array.from(fileList).map((f) => ({
-      name: f.name,
-      size: f.size,
-      file: f,
-    }));
+    const newFile: UploadedFile = {
+      name: fileList[0].name,
+      size: fileList[0].size,
+      file: fileList[0],
+    };
 
     onChange(
       periods.map((p) =>
         p.id === periodId
-          ? { ...p, [docType]: [...p[docType], ...newFiles] }
+          ? { ...p, [docType]: [newFile] }
           : p
       )
     );
     setUploading(null);
     toast({
-      title: "Archivo(s) cargado(s)",
-      description: `${newFiles.length} archivo(s) agregado(s).`,
+      title: "Archivo cargado",
+      description: `${newFile.name} agregado.`,
     });
   };
 
@@ -190,12 +190,7 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
         <div className="flex items-center justify-between">
           <Label className="text-xs font-medium text-foreground">{label}</Label>
           {files.length > 0 && (
-            <Badge
-              variant="outline"
-              className="border-success/50 text-success bg-success/10 text-[10px]"
-            >
-              {files.length} archivo{files.length > 1 ? "s" : ""}
-            </Badge>
+            <CheckCircle2 className="w-3.5 h-3.5 text-success" />
           )}
         </div>
 
@@ -212,7 +207,6 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
             </span>
             <input
               type="file"
-              multiple
               className="hidden"
               accept=".xlsx,.xls,.pdf,.csv"
               onChange={(e) => handleFileUpload(periodId, docType, e.target.files)}
@@ -401,7 +395,7 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
           </div>
 
           {newType === "parcial" && (
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 pl-4 sm:pl-6">
               <Label className="text-xs text-muted-foreground">
                 Fecha de corte del periodo parcial
               </Label>
