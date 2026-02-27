@@ -55,6 +55,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
   const { toast } = useToast();
 
   const [creditType, setCreditType] = useState("");
+  const [estadoCuentaAnio, setEstadoCuentaAnio] = useState("");
   const [estadoCuenta, setEstadoCuenta] = useState<UploadedFile[]>([]);
   const [estadoResultados, setEstadoResultados] = useState<UploadedFile[]>([]);
   const [balanceGeneral, setBalanceGeneral] = useState<UploadedFile[]>([]);
