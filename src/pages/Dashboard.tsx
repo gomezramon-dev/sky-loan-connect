@@ -66,16 +66,20 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
   const [generating, setGenerating] = useState(false);
   const [generated, setGenerated] = useState(false);
 
+  const estadoCuentaComplete = useMemo(() => {
+    return estadoCuenta.length > 0 && estadoCuentaAnio && estadoCuenta.every((f) => f.banco && f.moneda);
+  }, [estadoCuenta, estadoCuentaAnio]);
+
   const isComplete = useMemo(() => {
     return (
       creditType &&
-      estadoCuenta.length > 0 &&
+      estadoCuentaComplete &&
       estadoResultados.length > 0 &&
       balanceGeneral.length > 0 &&
       creditScore &&
       !creditScoreError
     );
-  }, [creditType, estadoCuenta, estadoResultados, balanceGeneral, creditScore, creditScoreError]);
+  }, [creditType, estadoCuentaComplete, estadoResultados, balanceGeneral, creditScore, creditScoreError]);
 
   const completionSteps = useMemo(() => {
     let done = 0;
