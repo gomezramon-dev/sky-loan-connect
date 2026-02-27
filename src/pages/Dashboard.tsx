@@ -164,8 +164,10 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
       [],
       ["DOCUMENTOS ADJUNTOS"],
       ["Estado de Cuenta", estadoCuenta.map((f) => f.name).join(", ")],
-      ["Estado de Resultados", estadoResultados.map((f) => f.name).join(", ")],
-      ["Balance General", balanceGeneral.map((f) => f.name).join(", ")],
+      ...financialPeriods.flatMap((p) => [
+        [`Estado de Resultados (${p.year} - ${p.type})`, p.estadoResultados.map((f) => f.name).join(", ")],
+        [`Balance General (${p.year} - ${p.type})`, p.balanceGeneral.map((f) => f.name).join(", ")],
+      ]),
       [],
       ["ANÁLISIS PRELIMINAR"],
       ["Parámetro", "Valor", "Evaluación"],
