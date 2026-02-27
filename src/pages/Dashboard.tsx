@@ -374,39 +374,70 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
               <FileUploadZone type="cuenta" label="Archivos del Estado de Cuenta" />
 
               {estadoCuenta.length > 0 && (
-                <div className="space-y-3 border border-border rounded-xl p-4 bg-secondary/30">
+                <div className="space-y-2">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Detalle por archivo</p>
-                  {estadoCuenta.map((file, i) => (
-                    <div key={i} className="space-y-2 p-3 bg-accent/30 rounded-lg">
-                      <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">Banco</Label>
-                          <Input
-                            placeholder="Nombre del banco"
-                            value={file.banco || ""}
-                            onChange={(e) => updateCuentaFile(i, "banco", e.target.value)}
-                            className="h-9 bg-background"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">Moneda</Label>
-                          <Select
-                            value={file.moneda || ""}
-                            onValueChange={(v) => updateCuentaFile(i, "moneda", v)}
+                  {estadoCuenta.map((file, i) => {
+                    const isFilledOut = file.banco && file.moneda;
+                    return (
+                      <div
+                        key={i}
+                        className={`rounded-xl border transition-all ${
+                          isFilledOut
+                            ? "border-success/40 bg-success/5"
+                            : "border-border bg-card"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 px-4 py-3 border-b border-border/50">
+                          <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center shrink-0">
+                            <FileSpreadsheet className="w-4 h-4 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+                            <p className="text-xs text-muted-foreground">{formatSize(file.size)}</p>
+                          </div>
+                          {isFilledOut && (
+                            <Badge variant="outline" className="border-success/50 text-success bg-success/10 text-xs shrink-0">
+                              Completo
+                            </Badge>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive shrink-0"
+                            onClick={() => removeFile("cuenta", i)}
                           >
-                            <SelectTrigger className="h-9 bg-background">
-                              <SelectValue placeholder="Seleccionar" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="pesos">Pesos (MXN)</SelectItem>
-                              <SelectItem value="dolares">Dólares (USD)</SelectItem>
-                            </SelectContent>
-                          </Select>
+                            <X className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 px-4 py-3">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs text-muted-foreground">Banco</Label>
+                            <Input
+                              placeholder="Ej: BBVA, Banorte..."
+                              value={file.banco || ""}
+                              onChange={(e) => updateCuentaFile(i, "banco", e.target.value)}
+                              className="h-9 bg-secondary/50"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs text-muted-foreground">Moneda</Label>
+                            <Select
+                              value={file.moneda || ""}
+                              onValueChange={(v) => updateCuentaFile(i, "moneda", v)}
+                            >
+                              <SelectTrigger className="h-9 bg-secondary/50">
+                                <SelectValue placeholder="Seleccionar" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pesos">🇲🇽 Pesos (MXN)</SelectItem>
+                                <SelectItem value="dolares">🇺🇸 Dólares (USD)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
