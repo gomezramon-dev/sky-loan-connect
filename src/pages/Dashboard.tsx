@@ -9,7 +9,6 @@ import {
   Download,
   Loader2,
   ChevronRight,
-  FolderOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +20,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
+import FinancialPeriods, { type FinancialPeriod } from "@/components/FinancialPeriods";
 
 interface DashboardProps {
   onLogout: () => void;
@@ -58,8 +58,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
   const [creditType, setCreditType] = useState("");
   const [estadoCuentaAnio, setEstadoCuentaAnio] = useState("");
   const [estadoCuenta, setEstadoCuenta] = useState<UploadedFile[]>([]);
-  const [estadoResultados, setEstadoResultados] = useState<UploadedFile[]>([]);
-  const [balanceGeneral, setBalanceGeneral] = useState<UploadedFile[]>([]);
+  const [financialPeriods, setFinancialPeriods] = useState<FinancialPeriod[]>([]);
   const [creditScore, setCreditScore] = useState("");
   const [creditScoreError, setCreditScoreError] = useState("");
 
@@ -71,39 +70,41 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
     return estadoCuenta.length > 0 && estadoCuentaAnio && estadoCuenta.every((f) => f.banco && f.moneda);
   }, [estadoCuenta, estadoCuentaAnio]);
 
+  const financialsComplete = useMemo(() => {
+    const completeYears = financialPeriods.filter((p) => p.type === "completo");
+    if (completeYears.length === 0) return false;
+    return financialPeriods.every(
+      (p) => p.estadoResultados.length > 0 && p.balanceGeneral.length > 0
+    );
+  }, [financialPeriods]);
+
   const isComplete = useMemo(() => {
     return (
       creditType &&
       estadoCuentaComplete &&
-      estadoResultados.length > 0 &&
-      balanceGeneral.length > 0 &&
+      financialsComplete &&
       creditScore &&
       !creditScoreError
     );
-  }, [creditType, estadoCuentaComplete, estadoResultados, balanceGeneral, creditScore, creditScoreError]);
+  }, [creditType, estadoCuentaComplete, financialsComplete, creditScore, creditScoreError]);
 
   const completionSteps = useMemo(() => {
     let done = 0;
     if (creditType) done++;
     if (estadoCuentaComplete) done++;
-    if (estadoResultados.length > 0) done++;
-    if (balanceGeneral.length > 0) done++;
+    if (financialsComplete) done++;
     if (creditScore && !creditScoreError) done++;
     return done;
-  }, [creditType, estadoCuentaComplete, estadoResultados, balanceGeneral, creditScore, creditScoreError]);
+  }, [creditType, estadoCuentaComplete, financialsComplete, creditScore, creditScoreError]);
 
-  type FileZone = "cuenta" | "estado" | "balance";
+  type FileZone = "cuenta";
 
   const setterMap: Record<FileZone, React.Dispatch<React.SetStateAction<UploadedFile[]>>> = {
     cuenta: setEstadoCuenta,
-    estado: setEstadoResultados,
-    balance: setBalanceGeneral,
   };
 
   const getterMap: Record<FileZone, UploadedFile[]> = {
     cuenta: estadoCuenta,
-    estado: estadoResultados,
-    balance: balanceGeneral,
   };
 
   const handleFileUpload = useCallback(
@@ -163,8 +164,10 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
       [],
       ["DOCUMENTOS ADJUNTOS"],
       ["Estado de Cuenta", estadoCuenta.map((f) => f.name).join(", ")],
-      ["Estado de Resultados", estadoResultados.map((f) => f.name).join(", ")],
-      ["Balance General", balanceGeneral.map((f) => f.name).join(", ")],
+      ...financialPeriods.flatMap((p) => [
+        [`Estado de Resultados (${p.year} - ${p.type})`, p.estadoResultados.map((f) => f.name).join(", ")],
+        [`Balance General (${p.year} - ${p.type})`, p.balanceGeneral.map((f) => f.name).join(", ")],
+      ]),
       [],
       ["ANÁLISIS PRELIMINAR"],
       ["Parámetro", "Valor", "Evaluación"],
@@ -198,8 +201,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
     setCreditType("");
     setEstadoCuentaAnio("");
     setEstadoCuenta([]);
-    setEstadoResultados([]);
-    setBalanceGeneral([]);
+    setFinancialPeriods([]);
     setCreditScore("");
     setCreditScoreError("");
     setGenerated(false);
@@ -424,7 +426,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
             </CardContent>
           </Card>
 
-          {/* 3. Estados Financieros (grouped) */}
+          {/* 3. Estados Financieros */}
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
@@ -433,18 +435,15 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
                 </div>
                 <CardTitle className="text-base">Estados Financieros</CardTitle>
               </div>
-              <CardDescription>Sube los documentos financieros requeridos</CardDescription>
+              <CardDescription>
+                Agrega los periodos fiscales con su Estado de Resultados y Balance General
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="border border-border rounded-xl p-4 space-y-5 bg-secondary/30">
-                <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  <FolderOpen className="w-4 h-4" />
-                  Documentos requeridos
-                </div>
-                <FileUploadZone type="estado" label="Estado de Resultados" />
-                <div className="border-t border-border" />
-                <FileUploadZone type="balance" label="Balance General" />
-              </div>
+              <FinancialPeriods
+                periods={financialPeriods}
+                onChange={setFinancialPeriods}
+              />
             </CardContent>
           </Card>
 
