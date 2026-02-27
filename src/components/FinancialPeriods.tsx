@@ -392,40 +392,40 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
                 </label>
               </RadioGroup>
             </div>
-          </div>
 
-          {newType === "parcial" && (
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">
-                Fecha de corte del periodo parcial
-              </Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full sm:w-[240px] justify-start text-left font-normal h-9",
-                      !newEndDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {newEndDate
-                      ? format(newEndDate, "dd 'de' MMMM, yyyy", { locale: es })
-                      : "Seleccionar fecha"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={newEndDate}
-                    onSelect={setNewEndDate}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          )}
+            {newType === "parcial" && (
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">
+                  Fecha de corte del periodo parcial
+                </Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal h-9 bg-background",
+                        !newEndDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {newEndDate
+                        ? format(newEndDate, "dd 'de' MMMM, yyyy", { locale: es })
+                        : "Seleccionar fecha"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={newEndDate}
+                      onSelect={setNewEndDate}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
+          </div>
 
           <div className="flex gap-2">
             <Button size="sm" onClick={handleAddPeriod} className="gap-1.5">
