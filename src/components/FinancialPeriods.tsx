@@ -207,7 +207,6 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
             </span>
             <input
               type="file"
-              multiple
               className="hidden"
               accept=".xlsx,.xls,.pdf,.csv"
               onChange={(e) => handleFileUpload(periodId, docType, e.target.files)}
