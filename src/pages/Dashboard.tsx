@@ -70,26 +70,32 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
     return estadoCuenta.length > 0 && estadoCuentaAnio && estadoCuenta.every((f) => f.banco && f.moneda);
   }, [estadoCuenta, estadoCuentaAnio]);
 
+  const financialsComplete = useMemo(() => {
+    const completeYears = financialPeriods.filter((p) => p.type === "completo");
+    if (completeYears.length === 0) return false;
+    return financialPeriods.every(
+      (p) => p.estadoResultados.length > 0 && p.balanceGeneral.length > 0
+    );
+  }, [financialPeriods]);
+
   const isComplete = useMemo(() => {
     return (
       creditType &&
       estadoCuentaComplete &&
-      estadoResultados.length > 0 &&
-      balanceGeneral.length > 0 &&
+      financialsComplete &&
       creditScore &&
       !creditScoreError
     );
-  }, [creditType, estadoCuentaComplete, estadoResultados, balanceGeneral, creditScore, creditScoreError]);
+  }, [creditType, estadoCuentaComplete, financialsComplete, creditScore, creditScoreError]);
 
   const completionSteps = useMemo(() => {
     let done = 0;
     if (creditType) done++;
     if (estadoCuentaComplete) done++;
-    if (estadoResultados.length > 0) done++;
-    if (balanceGeneral.length > 0) done++;
+    if (financialsComplete) done++;
     if (creditScore && !creditScoreError) done++;
     return done;
-  }, [creditType, estadoCuentaComplete, estadoResultados, balanceGeneral, creditScore, creditScoreError]);
+  }, [creditType, estadoCuentaComplete, financialsComplete, creditScore, creditScoreError]);
 
   type FileZone = "cuenta" | "estado" | "balance";
 
