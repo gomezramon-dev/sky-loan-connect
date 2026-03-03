@@ -10,19 +10,20 @@ import {
   AlertCircle,
   Trash2,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Calendar } from "@/components/ui/calendar";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -59,6 +60,7 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
   const [newYear, setNewYear] = useState("");
   const [newType, setNewType] = useState<"completo" | "parcial">("completo");
   const [newEndDate, setNewEndDate] = useState<Date | undefined>();
+  const [newEndMonth, setNewEndMonth] = useState<string>("");
 
   const completeYears = useMemo(
     () => periods.filter((p) => p.type === "completo"),
@@ -84,20 +86,24 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
       });
       return;
     }
-    if (newType === "parcial" && !newEndDate) {
+    if (newType === "parcial" && !newEndMonth) {
       toast({
-        title: "Fecha requerida",
-        description: "Especifica la fecha de corte para el año parcial.",
+        title: "Mes requerido",
+        description: "Selecciona el mes de corte para el año parcial.",
         variant: "destructive",
       });
       return;
     }
 
+    const parcialEndDate = newType === "parcial" && newEndMonth
+      ? endOfMonth(new Date(parseInt(newYear), parseInt(newEndMonth)))
+      : undefined;
+
     const period: FinancialPeriod = {
       id: crypto.randomUUID(),
       year: newYear,
       type: newType,
-      endDate: newType === "parcial" ? newEndDate : undefined,
+      endDate: parcialEndDate,
       estadoResultados: [],
       balanceGeneral: [],
     };
@@ -107,6 +113,7 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
     setNewYear("");
     setNewType("completo");
     setNewEndDate(undefined);
+    setNewEndMonth("");
     toast({
       title: "Periodo agregado",
       description: `Año ${newYear} (${newType === "completo" ? "completo" : "parcial"}) agregado.`,
@@ -398,33 +405,24 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
             {newType === "parcial" && (
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">
-                  Fecha de corte del periodo parcial
+                  Mes de corte
                 </Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal h-9 bg-background",
-                        !newEndDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {newEndDate
-                        ? format(newEndDate, "dd 'de' MMMM, yyyy", { locale: es })
-                        : "Seleccionar fecha"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={newEndDate}
-                      onSelect={setNewEndDate}
-                      initialFocus
-                      className={cn("p-3 pointer-events-auto")}
-                    />
-                  </PopoverContent>
-                </Popover>
+                <Select value={newEndMonth} onValueChange={setNewEndMonth}>
+                  <SelectTrigger className="h-9 bg-background">
+                    <SelectValue placeholder="Seleccionar mes" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 11 }, (_, i) => {
+                      const date = new Date(2024, i, 1);
+                      const monthName = format(date, "MMMM", { locale: es });
+                      return (
+                        <SelectItem key={i} value={String(i)}>
+                          {monthName.charAt(0).toUpperCase() + monthName.slice(1)}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
               </div>
             )}
           </div>
@@ -442,6 +440,7 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
                 setNewYear("");
                 setNewType("completo");
                 setNewEndDate(undefined);
+                setNewEndMonth("");
               }}
             >
               Cancelar
