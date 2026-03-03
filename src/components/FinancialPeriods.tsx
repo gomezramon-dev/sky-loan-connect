@@ -53,13 +53,19 @@ const formatSize = (bytes: number) => {
   return `${(bytes / 1048576).toFixed(1)} MB`;
 };
 
+const quarters = [
+  { value: "0", label: "Primer trimestre",  endMonth: 2  }, // marzo
+  { value: "1", label: "Segundo trimestre", endMonth: 5  }, // junio
+  { value: "2", label: "Tercer trimestre",  endMonth: 8  }, // septiembre
+  { value: "3", label: "Cuarto trimestre",  endMonth: 11 }, // diciembre
+];
+
 const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
   const { toast } = useToast();
   const [uploading, setUploading] = useState<string | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newYear, setNewYear] = useState("");
   const [newType, setNewType] = useState<"completo" | "parcial">("completo");
-  const [newEndDate, setNewEndDate] = useState<Date | undefined>();
   const [newEndMonth, setNewEndMonth] = useState<string>("");
 
   const completeYears = useMemo(
@@ -73,7 +79,7 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
   );
 
   const canAddPartial = completeYears.length >= 1;
-  const canAddMore = periods.length < 3; // up to 3 periods total
+  const canAddMore = periods.length < 3;
   const usedYears = periods.map((p) => p.year);
 
   const handleAddPeriod = () => {
@@ -88,16 +94,19 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
     }
     if (newType === "parcial" && !newEndMonth) {
       toast({
-        title: "Mes requerido",
-        description: "Selecciona el mes de corte para el año parcial.",
+        title: "Trimestre requerido",
+        description: "Selecciona el trimestre de corte para el año parcial.",
         variant: "destructive",
       });
       return;
     }
 
-    const parcialEndDate = newType === "parcial" && newEndMonth
-      ? endOfMonth(new Date(parseInt(newYear), parseInt(newEndMonth)))
-      : undefined;
+    const selectedQuarter = quarters.find((q) => q.value === newEndMonth);
+
+    const parcialEndDate =
+      newType === "parcial" && selectedQuarter
+        ? endOfMonth(new Date(parseInt(newYear), selectedQuarter.endMonth))
+        : undefined;
 
     const period: FinancialPeriod = {
       id: crypto.randomUUID(),
@@ -112,7 +121,6 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
     setShowAddForm(false);
     setNewYear("");
     setNewType("completo");
-    setNewEndDate(undefined);
     setNewEndMonth("");
     toast({
       title: "Periodo agregado",
@@ -122,7 +130,6 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
 
   const removePeriod = (id: string) => {
     const period = periods.find((p) => p.id === id);
-    // Don't allow removing the last complete year if a partial exists
     if (period?.type === "completo" && completeYears.length === 1 && hasPartial) {
       toast({
         title: "No se puede eliminar",
@@ -405,22 +412,18 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
             {newType === "parcial" && (
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">
-                  Mes de corte
+                  Trimestre de corte
                 </Label>
                 <Select value={newEndMonth} onValueChange={setNewEndMonth}>
                   <SelectTrigger className="h-9 bg-background">
-                    <SelectValue placeholder="Seleccionar mes" />
+                    <SelectValue placeholder="Seleccionar trimestre" />
                   </SelectTrigger>
                   <SelectContent>
-                    {Array.from({ length: 12 }, (_, i) => {
-                      const date = new Date(2024, i, 1);
-                      const monthName = format(date, "MMMM", { locale: es });
-                      return (
-                        <SelectItem key={i} value={String(i)}>
-                          {monthName.charAt(0).toUpperCase() + monthName.slice(1)}
-                        </SelectItem>
-                      );
-                    })}
+                    {quarters.map((q) => (
+                      <SelectItem key={q.value} value={q.value}>
+                        {q.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -439,7 +442,6 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
                 setShowAddForm(false);
                 setNewYear("");
                 setNewType("completo");
-                setNewEndDate(undefined);
                 setNewEndMonth("");
               }}
             >
