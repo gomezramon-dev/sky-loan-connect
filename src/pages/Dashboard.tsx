@@ -52,10 +52,34 @@ const CREDIT_TYPES = [
   },
 ];
 
+const FORMALITY_TYPES = [
+  {
+    value: "total",
+    label: "Total",
+    description: "Información financiera auditada y completa",
+  },
+  {
+    value: "parcial",
+    label: "Parcial",
+    description: "Información financiera parcialmente documentada",
+  },
+  {
+    value: "basica",
+    label: "Básica",
+    description: "Documentación financiera mínima disponible",
+  },
+  {
+    value: "informal",
+    label: "Informal",
+    description: "Sin documentación financiera formal",
+  },
+];
+
 const Dashboard = ({ onLogout }: DashboardProps) => {
   const { toast } = useToast();
 
   const [creditType, setCreditType] = useState("");
+  const [formalidad, setFormalidad] = useState("");
   const [estadoCuentaAnio, setEstadoCuentaAnio] = useState("");
   const [estadoCuenta, setEstadoCuenta] = useState<UploadedFile[]>([]);
   const [financialPeriods, setFinancialPeriods] = useState<FinancialPeriod[]>([]);
@@ -81,21 +105,23 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
   const isComplete = useMemo(() => {
     return (
       creditType &&
+      formalidad &&
       estadoCuentaComplete &&
       financialsComplete &&
       creditScore &&
       !creditScoreError
     );
-  }, [creditType, estadoCuentaComplete, financialsComplete, creditScore, creditScoreError]);
+  }, [creditType, formalidad, estadoCuentaComplete, financialsComplete, creditScore, creditScoreError]);
 
   const completionSteps = useMemo(() => {
     let done = 0;
     if (creditType) done++;
+    if (formalidad) done++;
     if (estadoCuentaComplete) done++;
     if (financialsComplete) done++;
     if (creditScore && !creditScoreError) done++;
     return done;
-  }, [creditType, estadoCuentaComplete, financialsComplete, creditScore, creditScoreError]);
+  }, [creditType, formalidad, estadoCuentaComplete, financialsComplete, creditScore, creditScoreError]);
 
   type FileZone = "cuenta";
 
@@ -159,6 +185,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
       ["SOLICITUD DE CRÉDITO"],
       [],
       ["Tipo de Solicitud", creditLabel],
+      ["Formalidad Financiera", FORMALITY_TYPES.find((t) => t.value === formalidad)?.label || formalidad],
       ["Score Crediticio", score],
       ["Nivel de Riesgo", score >= 700 ? "Bajo" : score >= 600 ? "Medio" : "Alto"],
       [],
@@ -199,6 +226,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
 
   const handleReset = () => {
     setCreditType("");
+    setFormalidad("");
     setEstadoCuentaAnio("");
     setEstadoCuenta([]);
     setFinancialPeriods([]);
@@ -282,10 +310,10 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
           <p className="text-sm text-muted-foreground mt-1">Completa la información para generar el documento Excel</p>
           <div className="mt-4 space-y-2">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>{completionSteps} de 4 pasos completados</span>
-              <span>{Math.round((completionSteps / 4) * 100)}%</span>
+              <span>{completionSteps} de 5 pasos completados</span>
+              <span>{Math.round((completionSteps / 5) * 100)}%</span>
             </div>
-            <Progress value={(completionSteps / 4) * 100} className="h-2" />
+            <Progress value={(completionSteps / 5) * 100} className="h-2" />
           </div>
         </div>
 
@@ -329,12 +357,51 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
             </CardContent>
           </Card>
 
-          {/* 2. Estado de Cuenta */}
+          {/* 2. Formalidad Financiera */}
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-white">
                   2
+                </div>
+                <CardTitle className="text-base">Formalidad Financiera</CardTitle>
+              </div>
+              <CardDescription>Selecciona el nivel de formalidad de la información financiera</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <RadioGroup
+                value={formalidad}
+                onValueChange={(v) => {
+                  setFormalidad(v);
+                  if (generated) setGenerated(false);
+                }}
+              >
+                {FORMALITY_TYPES.map((type) => (
+                  <label
+                    key={type.value}
+                    className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-all ${
+                      formalidad === type.value
+                        ? "border-primary bg-accent/50"
+                        : "border-border hover:border-primary/40 hover:bg-accent/20"
+                    }`}
+                  >
+                    <RadioGroupItem value={type.value} className="mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{type.label}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{type.description}</p>
+                    </div>
+                  </label>
+                ))}
+              </RadioGroup>
+            </CardContent>
+          </Card>
+
+          {/* 3. Estado de Cuenta */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-white">
+                  3
                 </div>
                 <CardTitle className="text-base">Estado de Cuenta</CardTitle>
               </div>
@@ -426,12 +493,12 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
             </CardContent>
           </Card>
 
-          {/* 3. Estados Financieros */}
+          {/* 4. Estados Financieros */}
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-white">
-                  3
+                  4
                 </div>
                 <CardTitle className="text-base">Estados Financieros</CardTitle>
               </div>
@@ -447,12 +514,12 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
             </CardContent>
           </Card>
 
-          {/* 4. Credit Score */}
+          {/* 5. Credit Score */}
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-white">
-                  4
+                  5
                 </div>
                 <CardTitle className="text-base">Score Crediticio</CardTitle>
               </div>
