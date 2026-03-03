@@ -412,7 +412,7 @@ const FinancialPeriods = ({ periods, onChange }: FinancialPeriodsProps) => {
                     <SelectValue placeholder="Seleccionar mes" />
                   </SelectTrigger>
                   <SelectContent>
-                    {Array.from({ length: 11 }, (_, i) => {
+                    {Array.from({ length: 12 }, (_, i) => {
                       const date = new Date(2024, i, 1);
                       const monthName = format(date, "MMMM", { locale: es });
                       return (
