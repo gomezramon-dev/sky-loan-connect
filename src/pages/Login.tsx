@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Mail, Lock, Eye, EyeOff, Building2 } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import pontiLogo from "@/components/ui/svg/ponti.svg";
 
 interface LoginProps {
   onLogin: () => void;
@@ -41,7 +42,7 @@ const Login = ({ onLogin }: LoginProps) => {
         <div className="glass-card rounded-2xl p-8 shadow-lg">
           <div className="flex flex-col items-center mb-8">
             <div className="w-14 h-14 rounded-xl sky-gradient flex items-center justify-center mb-4 shadow-md">
-              <Building2 className="w-7 h-7 text-white" />
+              <img src={pontiLogo} alt="Ponti" className="w-8 h-8" />
             </div>
             <h1 className="text-2xl font-bold text-foreground">MasterHelper</h1>
             <p className="text-sm text-muted-foreground mt-1">Herramienta para la creación del Master Cliente</p>
