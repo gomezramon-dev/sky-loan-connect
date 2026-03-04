@@ -1,6 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
 import {
-  Building2,
   LogOut,
   FileSpreadsheet,
   Upload,
@@ -20,6 +19,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import * as XLSX from "xlsx";
+import pontiLogo from "@/components/ui/svg/ponti.svg";
 import FinancialPeriods, { type FinancialPeriod } from "@/components/FinancialPeriods";
 
 interface DashboardProps {
@@ -31,8 +31,25 @@ interface UploadedFile {
   size: number;
   file: File;
   banco?: string;
+  anio?: string;
+  mes?: string;
   moneda?: "pesos" | "dolares";
 }
+
+const MESES = [
+  { value: "01", label: "Enero" },
+  { value: "02", label: "Febrero" },
+  { value: "03", label: "Marzo" },
+  { value: "04", label: "Abril" },
+  { value: "05", label: "Mayo" },
+  { value: "06", label: "Junio" },
+  { value: "07", label: "Julio" },
+  { value: "08", label: "Agosto" },
+  { value: "09", label: "Septiembre" },
+  { value: "10", label: "Octubre" },
+  { value: "11", label: "Noviembre" },
+  { value: "12", label: "Diciembre" },
+];
 
 const CREDIT_TYPES = [
   {
@@ -52,23 +69,36 @@ const CREDIT_TYPES = [
   },
 ];
 
+const FORMALIDAD_TYPES = [
+  { value: "total", label: "Total", description: "Empresa con contabilidad formal completa" },
+  { value: "parcial", label: "Parcial", description: "Contabilidad parcialmente formalizada" },
+  { value: "basica", label: "Básica", description: "Registros contables básicos o simplificados" },
+  { value: "informal", label: "Informal", description: "Sin contabilidad formal registrada" },
+];
+
 const Dashboard = ({ onLogout }: DashboardProps) => {
   const { toast } = useToast();
 
   const [creditType, setCreditType] = useState("");
-  const [estadoCuentaAnio, setEstadoCuentaAnio] = useState("");
+  const [formalidad, setFormalidad] = useState("");
   const [estadoCuenta, setEstadoCuenta] = useState<UploadedFile[]>([]);
   const [financialPeriods, setFinancialPeriods] = useState<FinancialPeriod[]>([]);
+  const [experienceYears, setExperienceYears] = useState("");
+  const [experienceError, setExperienceError] = useState("");
   const [creditScore, setCreditScore] = useState("");
   const [creditScoreError, setCreditScoreError] = useState("");
-
+  const [esgScore, setEsgScore] = useState("");
+  const [esgScoreError, setEsgScoreError] = useState("");
   const [uploading, setUploading] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [generated, setGenerated] = useState(false);
 
   const estadoCuentaComplete = useMemo(() => {
-    return estadoCuenta.length > 0 && estadoCuentaAnio && estadoCuenta.every((f) => f.banco && f.moneda);
-  }, [estadoCuenta, estadoCuentaAnio]);
+    return (
+      estadoCuenta.length > 0 &&
+      estadoCuenta.every((f) => f.banco && f.anio && f.mes && f.moneda)
+    );
+  }, [estadoCuenta]);
 
   const financialsComplete = useMemo(() => {
     const completeYears = financialPeriods.filter((p) => p.type === "completo");
@@ -81,21 +111,26 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
   const isComplete = useMemo(() => {
     return (
       creditType &&
+      formalidad &&
       estadoCuentaComplete &&
       financialsComplete &&
-      creditScore &&
-      !creditScoreError
+      experienceYears && !experienceError &&
+      creditScore && !creditScoreError &&
+      esgScore && !esgScoreError
     );
-  }, [creditType, estadoCuentaComplete, financialsComplete, creditScore, creditScoreError]);
+  }, [creditType, formalidad, estadoCuentaComplete, financialsComplete, experienceYears, experienceError, creditScore, creditScoreError, esgScore, esgScoreError]);
 
   const completionSteps = useMemo(() => {
     let done = 0;
     if (creditType) done++;
+    if (formalidad) done++;
     if (estadoCuentaComplete) done++;
     if (financialsComplete) done++;
+    if (experienceYears && !experienceError) done++;
     if (creditScore && !creditScoreError) done++;
+    if (esgScore && !esgScoreError) done++;
     return done;
-  }, [creditType, estadoCuentaComplete, financialsComplete, creditScore, creditScoreError]);
+  }, [creditType, formalidad, estadoCuentaComplete, financialsComplete, experienceYears, experienceError, creditScore, creditScoreError, esgScore, esgScoreError]);
 
   type FileZone = "cuenta";
 
@@ -113,7 +148,11 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
       setUploading(type);
       await new Promise((r) => setTimeout(r, 800));
 
-      const newFiles: UploadedFile[] = Array.from(fileList).map((f) => ({ name: f.name, size: f.size, file: f }));
+      const newFiles: UploadedFile[] = Array.from(fileList).map((f) => ({
+        name: f.name,
+        size: f.size,
+        file: f,
+      }));
       setterMap[type]((prev) => [...prev, ...newFiles]);
       setUploading(null);
 
@@ -129,13 +168,27 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
     setterMap[type]((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const updateCuentaFile = (index: number, field: "banco" | "moneda", value: string) => {
-    setEstadoCuenta((prev) => prev.map((f, i) => (i === index ? { ...f, [field]: value } : f)));
+  const updateCuentaFile = (
+    index: number,
+    field: "banco" | "anio" | "mes" | "moneda",
+    value: string
+  ) => {
+    setEstadoCuenta((prev) =>
+      prev.map((f, i) => (i === index ? { ...f, [field]: value } : f))
+    );
   };
 
   const handleDrop = (type: FileZone, e: React.DragEvent) => {
     e.preventDefault();
     if (e.dataTransfer.files.length) handleFileUpload(type, e.dataTransfer.files);
+  };
+
+  const validateExperience = (value: string) => {
+    setExperienceYears(value);
+    const num = Number(value);
+    if (!value) setExperienceError("");
+    else if (isNaN(num) || num < 0 || num > 100) setExperienceError("La experiencia debe estar entre 0 y 100 años");
+    else setExperienceError("");
   };
 
   const validateScore = (value: string) => {
@@ -146,6 +199,14 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
     else setCreditScoreError("");
   };
 
+  const validateEsg = (value: string) => {
+    setEsgScore(value);
+    const num = Number(value);
+    if (!value) setEsgScoreError("");
+    else if (isNaN(num) || num < 0 || num > 100) setEsgScoreError("El puntaje ESG debe estar entre 0 y 100");
+    else setEsgScoreError("");
+  };
+
   const handleGenerate = async () => {
     if (!isComplete) return;
     setGenerating(true);
@@ -153,17 +214,24 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
     await new Promise((r) => setTimeout(r, 2000));
 
     const creditLabel = CREDIT_TYPES.find((t) => t.value === creditType)?.label || creditType;
+    const formalidadLabel = FORMALIDAD_TYPES.find((t) => t.value === formalidad)?.label || formalidad;
     const score = Number(creditScore);
 
     const headerData: (string | number)[][] = [
       ["SOLICITUD DE CRÉDITO"],
       [],
       ["Tipo de Solicitud", creditLabel],
+      ["Formalidad Financiera", formalidadLabel],
+      ["Experiencia en el Giro", `${experienceYears} año(s)`],
       ["Score Crediticio", score],
+      ["Puntaje ESG", Number(esgScore)],
       ["Nivel de Riesgo", score >= 700 ? "Bajo" : score >= 600 ? "Medio" : "Alto"],
       [],
       ["DOCUMENTOS ADJUNTOS"],
-      ["Estado de Cuenta", estadoCuenta.map((f) => f.name).join(", ")],
+      ["Estado de Cuenta", estadoCuenta.map((f) => {
+        const mesLabel = MESES.find((m) => m.value === f.mes)?.label || f.mes;
+        return `${f.name} (${f.banco} - ${mesLabel} ${f.anio})`;
+      }).join(", ")],
       ...financialPeriods.flatMap((p) => [
         [`Estado de Resultados (${p.year} - ${p.type})`, p.estadoResultados.map((f) => f.name).join(", ")],
         [`Balance General (${p.year} - ${p.type})`, p.balanceGeneral.map((f) => f.name).join(", ")],
@@ -172,6 +240,9 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
       ["ANÁLISIS PRELIMINAR"],
       ["Parámetro", "Valor", "Evaluación"],
       ["Score Crediticio", score, score >= 700 ? "Favorable" : score >= 600 ? "Aceptable" : "Requiere revisión"],
+      ["Puntaje ESG", Number(esgScore), Number(esgScore) >= 70 ? "Favorable" : Number(esgScore) >= 50 ? "Aceptable" : "Requiere revisión"],
+      ["Formalidad Financiera", formalidadLabel, "Registrado"],
+      ["Experiencia en el Giro", `${experienceYears} año(s)`, "Registrado"],
       ["Documentación Financiera", "Completa", "✓"],
       ["Tipo de Crédito", creditLabel, "Registrado"],
       [],
@@ -199,11 +270,15 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
 
   const handleReset = () => {
     setCreditType("");
-    setEstadoCuentaAnio("");
+    setFormalidad("");
     setEstadoCuenta([]);
     setFinancialPeriods([]);
+    setExperienceYears("");
+    setExperienceError("");
     setCreditScore("");
     setCreditScoreError("");
+    setEsgScore("");
+    setEsgScoreError("");
     setGenerated(false);
     toast({ title: "Formulario reiniciado", description: "Puedes iniciar una nueva solicitud." });
   };
@@ -215,7 +290,6 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
   };
 
   const FileUploadZone = ({ type, label }: { type: FileZone; label: string }) => {
-    const files = getterMap[type];
     return (
       <div className="space-y-2">
         <Label className="text-xs font-medium text-foreground">{label}</Label>
@@ -259,7 +333,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg sky-gradient flex items-center justify-center shadow-sm">
-              <Building2 className="w-4 h-4 text-white" />
+              <img src={pontiLogo} alt="Ponti" className="w-5 h-5" />
             </div>
             <span className="font-bold text-foreground">MasterHelper</span>
           </div>
@@ -282,10 +356,10 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
           <p className="text-sm text-muted-foreground mt-1">Completa la información para generar el documento Excel</p>
           <div className="mt-4 space-y-2">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>{completionSteps} de 4 pasos completados</span>
-              <span>{Math.round((completionSteps / 4) * 100)}%</span>
+              <span>{completionSteps} de 7 pasos completados</span>
+              <span>{Math.round((completionSteps / 7) * 100)}%</span>
             </div>
-            <Progress value={(completionSteps / 4) * 100} className="h-2" />
+            <Progress value={(completionSteps / 7) * 100} className="h-2" />
           </div>
         </div>
 
@@ -329,31 +403,57 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
             </CardContent>
           </Card>
 
-          {/* 2. Estado de Cuenta */}
+          {/* 2. Formalidad Financiera */}
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-white">
                   2
                 </div>
+                <CardTitle className="text-base">Formalidad Financiera</CardTitle>
+              </div>
+              <CardDescription>Selecciona el nivel de formalidad contable de la empresa</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <RadioGroup
+                value={formalidad}
+                onValueChange={(v) => {
+                  setFormalidad(v);
+                  if (generated) setGenerated(false);
+                }}
+              >
+                {FORMALIDAD_TYPES.map((type) => (
+                  <label
+                    key={type.value}
+                    className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-all ${
+                      formalidad === type.value
+                        ? "border-primary bg-accent/50"
+                        : "border-border hover:border-primary/40 hover:bg-accent/20"
+                    }`}
+                  >
+                    <RadioGroupItem value={type.value} className="mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{type.label}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{type.description}</p>
+                    </div>
+                  </label>
+                ))}
+              </RadioGroup>
+            </CardContent>
+          </Card>
+
+          {/* 3. Estado de Cuenta */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-white">
+                  3
+                </div>
                 <CardTitle className="text-base">Estado de Cuenta</CardTitle>
               </div>
-              <CardDescription>Sube tu(s) estado(s) de cuenta bancario(s)</CardDescription>
+              <CardDescription>Sube los estados de cuenta bancarios</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-xs font-medium text-foreground">Año del Estado de Cuenta</Label>
-                <Input
-                  type="number"
-                  placeholder="Ej: 2024"
-                  min={2000}
-                  max={2099}
-                  value={estadoCuentaAnio}
-                  onChange={(e) => setEstadoCuentaAnio(e.target.value)}
-                  className="h-10 bg-secondary/50 max-w-[200px]"
-                />
-              </div>
-
               <FileUploadZone type="cuenta" label="Archivos del Estado de Cuenta" />
 
               {estadoCuenta.length > 0 && (
@@ -362,7 +462,7 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
                     Detalle por archivo
                   </p>
                   {estadoCuenta.map((file, i) => {
-                    const isFilledOut = file.banco && file.moneda;
+                    const isFilledOut = file.banco && file.anio && file.mes && file.moneda;
                     return (
                       <div
                         key={i}
@@ -395,25 +495,52 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
                             <X className="w-3.5 h-3.5" />
                           </Button>
                         </div>
-                        <div className="grid grid-cols-2 gap-3 px-4 py-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-4 py-3">
                           <div className="space-y-1.5">
                             <Label className="text-xs text-muted-foreground">Banco</Label>
                             <Input
-                              placeholder="Ej: BBVA, Banorte..."
+                              placeholder="Ej: BBVA..."
                               value={file.banco || ""}
                               onChange={(e) => updateCuentaFile(i, "banco", e.target.value)}
                               className="h-9 bg-secondary/50"
                             />
                           </div>
                           <div className="space-y-1.5">
+                            <Label className="text-xs text-muted-foreground">Año</Label>
+                            <Input
+                              type="number"
+                              placeholder="Ej: 2024"
+                              min={2000}
+                              max={2099}
+                              value={file.anio || ""}
+                              onChange={(e) => updateCuentaFile(i, "anio", e.target.value)}
+                              className="h-9 bg-secondary/50"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs text-muted-foreground">Mes</Label>
+                            <Select value={file.mes || ""} onValueChange={(v) => updateCuentaFile(i, "mes", v)}>
+                              <SelectTrigger className="h-9 bg-secondary/50">
+                                <SelectValue placeholder="Mes" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {MESES.map((m) => (
+                                  <SelectItem key={m.value} value={m.value}>
+                                    {m.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1.5">
                             <Label className="text-xs text-muted-foreground">Moneda</Label>
                             <Select value={file.moneda || ""} onValueChange={(v) => updateCuentaFile(i, "moneda", v)}>
                               <SelectTrigger className="h-9 bg-secondary/50">
-                                <SelectValue placeholder="Seleccionar" />
+                                <SelectValue placeholder="Moneda" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="pesos">🇲🇽 Pesos (MXN)</SelectItem>
-                                <SelectItem value="dolares">🇺🇸 Dólares (USD)</SelectItem>
+                                <SelectItem value="pesos">MX Pesos (MXN)</SelectItem>
+                                <SelectItem value="dolares">US Dólares (USD)</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
@@ -426,12 +553,12 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
             </CardContent>
           </Card>
 
-          {/* 3. Estados Financieros */}
+          {/* 4. Estados Financieros */}
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-white">
-                  3
+                  4
                 </div>
                 <CardTitle className="text-base">Estados Financieros</CardTitle>
               </div>
@@ -447,12 +574,43 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
             </CardContent>
           </Card>
 
-          {/* 4. Credit Score */}
+          {/* 5. Experiencia en el Giro */}
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-white">
-                  4
+                  5
+                </div>
+                <CardTitle className="text-base">Experiencia en el Giro</CardTitle>
+              </div>
+              <CardDescription>Ingresa los años de experiencia del cliente en el giro</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="experience" className="text-xs">
+                  Años de experiencia
+                </Label>
+                <Input
+                  id="experience"
+                  type="number"
+                  placeholder="Ej: 5"
+                  min={0}
+                  max={100}
+                  value={experienceYears}
+                  onChange={(e) => validateExperience(e.target.value)}
+                  className="h-10 bg-secondary/50"
+                />
+                {experienceError && <p className="text-xs text-destructive">{experienceError}</p>}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 6. Score Crediticio */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-white">
+                  6
                 </div>
                 <CardTitle className="text-base">Score Crediticio</CardTitle>
               </div>
@@ -474,6 +632,37 @@ const Dashboard = ({ onLogout }: DashboardProps) => {
                   className="h-10 bg-secondary/50"
                 />
                 {creditScoreError && <p className="text-xs text-destructive">{creditScoreError}</p>}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 7. Puntaje ESG */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full sky-gradient flex items-center justify-center text-xs font-bold text-white">
+                  7
+                </div>
+                <CardTitle className="text-base">Puntaje ESG</CardTitle>
+              </div>
+              <CardDescription>Ingresa el puntaje ESG (0–100)</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="esg" className="text-xs">
+                  Puntaje
+                </Label>
+                <Input
+                  id="esg"
+                  type="number"
+                  placeholder="Ej: 75"
+                  min={0}
+                  max={100}
+                  value={esgScore}
+                  onChange={(e) => validateEsg(e.target.value)}
+                  className="h-10 bg-secondary/50"
+                />
+                {esgScoreError && <p className="text-xs text-destructive">{esgScoreError}</p>}
               </div>
             </CardContent>
           </Card>
