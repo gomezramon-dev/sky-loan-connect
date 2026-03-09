@@ -1,0 +1,11 @@
+export { SectionCard } from "./SectionCard";
+export { CreditTypeSection } from "./CreditTypeSection";
+export { FormalidadSection } from "./FormalidadSection";
+export { BankStatementSection } from "./BankStatementSection";
+export { FinancialPeriodsSection } from "./FinancialPeriodsSection";
+export { ExperienceSection } from "./ExperienceSection";
+export { CreditScoreSection } from "./CreditScoreSection";
+export { EsgScoreSection } from "./EsgScoreSection";
+export { FormActions } from "./FormActions";
+export { DashboardHeader } from "./DashboardHeader";
+export { CompletionProgress } from "./CompletionProgress";
