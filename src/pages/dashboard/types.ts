@@ -17,15 +17,35 @@ export type CreditTypeValue =
   | "adquisicion_activos"
   | "proyectos_inversion";
 
-/** Formalidad option value */
-export type FormalidadValue = "total" | "parcial" | "basica" | "informal";
+/**
+ * API format for bank statements (Estado de Cuenta).
+ * Structure: { "BankName": { "MXN"|"USD": { "YYYYMM": "base64..." } } }
+ */
+export type BankStatementsPayload = Record<
+  string,
+  Record<string, Record<string, string>>
+>;
+
+/**
+ * API format for financial statements (Estados Financieros).
+ * Structure: { "YYYY": { isComplete, trimester, incomeStatement, balanceSheet } }
+ */
+export interface FinancialStatementYear {
+  isComplete: boolean;
+  trimester: number; // 0=completo, 1-4=Q1-Q4
+  incomeStatement: string; // base64
+  balanceSheet: string; // base64
+}
+
+export type FinancialStatementsPayload = Record<string, FinancialStatementYear>;
 
 /** Extracted form data - ready for pipeline/API consumption */
 export interface DashboardFormData {
   creditType: CreditTypeValue;
-  formalidad: FormalidadValue;
-  bankStatements: BankStatementFile[];
-  financialPeriods: FinancialPeriod[];
+  /** Formality as number: Total=100, Parcial=75, Básica=50, Informal=0 */
+  formalidad: number;
+  bankStatements: BankStatementsPayload;
+  financialStatements: FinancialStatementsPayload;
   experienceYears: number;
   creditScore: number;
   esgScore: number;

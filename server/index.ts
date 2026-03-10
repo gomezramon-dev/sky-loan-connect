@@ -1,10 +1,14 @@
 import "dotenv/config";
 import express, { Request, Response } from "express";
+import fs from "fs";
+import path from "path";
 import authRoutes from "./routes/auth.js";
 import usersRoutes from "./routes/users.js";
 import { db, seedAdminIfNeeded } from "./db.js";
 
 const app = express();
+const OUTPUT_DIR = path.join(process.cwd(), "data", "output");
+const MASTER_FILE = path.join(OUTPUT_DIR, "master_cliente.xlsx");
 const PORT = process.env.PORT ?? 8080;
 const WORKER_URL = process.env.WORKER_URL ?? "http://localhost:8081";
 
@@ -24,84 +28,168 @@ app.use("/users", usersRoutes);
 // Initialize DB and seed admin
 seedAdminIfNeeded();
 
-type BankStatementsPayload = Record<string, Record<string, string>>;
+// Asegurar que existe el directorio de output para master
+if (!fs.existsSync(OUTPUT_DIR)) {
+  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+}
 
 /**
- * POST /kickoff-excel-generation
- * Recibe un JSON con bank statements en formato:
- * {
- *   "BBVA": {
- *     "202401MXN": "base64...",
- *     "202402MXN": "base64...",
- *     "202403MXN": "base64..."
- *   },
- *   "Santander": { ... }
- * }
- * Extrae los bank statements y los envía a /extract-bank-statements del worker
+ * Bank statements (Estado de Cuenta) format.
+ * { "BankName": { "MXN"|"USD": { "YYYYMM": "base64..." } } }
  */
-app.post("/kickoff-excel-generation", async (req: Request, res: Response) => {
+type BankStatementsPayload = Record<string, Record<string, Record<string, string>>>;
+
+/**
+ * Financial statements (Estados Financieros) format.
+ * { "YYYY": { isComplete, trimester, incomeStatement, balanceSheet } }
+ */
+interface FinancialStatementYear {
+  isComplete: boolean;
+  trimester: number;
+  incomeStatement: string;
+  balanceSheet: string;
+}
+
+type FinancialStatementsPayload = Record<string, FinancialStatementYear>;
+
+interface MasterGenerationPayload {
+  creditType: "capital_trabajo" | "adquisicion_activos" | "proyectos_inversion";
+  formalidad: number;
+  bankStatements: BankStatementsPayload;
+  financialStatements: FinancialStatementsPayload;
+  experienceYears: number;
+  creditScore: number;
+  esgScore: number;
+}
+
+/**
+ * POST /kickoff-master-generation
+ * Envía el payload al worker para generar master_cliente.xlsx.
+ * Acepta: creditType, formalidad, bankStatements, financialStatements, experienceYears, creditScore, esgScore.
+ * - bankStatements: { "BankName": { "MXN"|"USD": { "YYYYMM": "base64..." } } }
+ * - financialStatements: { "YYYY": { isComplete, trimester, incomeStatement, balanceSheet } }
+ */
+app.post("/kickoff-master-generation", async (req: Request, res: Response) => {
   try {
-    const payload = req.body as unknown;
-
-    if (!payload || typeof payload !== "object") {
+    const body = req.body as unknown;
+    if (!body || typeof body !== "object") {
       return res.status(400).json({
-        error: "Invalid payload",
-        message: "Expected a JSON object with bank statements",
-      });
-    }
-
-    // Extraer bank statements del payload
-    // El formato esperado es { "BANCO": { "periodo": base64, ... }, ... }
-    const bankStatements: BankStatementsPayload = {};
-    for (const [bankName, periods] of Object.entries(payload)) {
-      if (periods && typeof periods === "object" && !Array.isArray(periods)) {
-        bankStatements[bankName] = periods as Record<string, string>;
-      }
-    }
-
-    if (Object.keys(bankStatements).length === 0) {
-      return res.status(400).json({
-        error: "No bank statements found",
+        error: "Payload inválido",
         message:
-          "Payload must contain bank names as keys with period-base64 mappings",
+          "Se requiere un objeto JSON con creditType, formalidad, bankStatements, financialStatements, experienceYears, creditScore, esgScore",
       });
     }
 
-    // Llamar al worker Python /extract-bank-statements
-    const workerResponse = await fetch(`${WORKER_URL}/extract-bank-statements`, {
+    const payload = body as MasterGenerationPayload;
+    const {
+      creditType,
+      formalidad,
+      bankStatements,
+      financialStatements,
+      experienceYears,
+      creditScore,
+      esgScore,
+    } = payload;
+
+    if (
+      !creditType ||
+      formalidad == null ||
+      experienceYears == null ||
+      creditScore == null ||
+      esgScore == null
+    ) {
+      return res.status(400).json({
+        error: "Campos requeridos faltantes",
+        message:
+          "creditType, formalidad, experienceYears, creditScore, esgScore son obligatorios",
+      });
+    }
+
+    if (typeof bankStatements !== "object" || bankStatements === null) {
+      return res.status(400).json({
+        error: "bankStatements inválido",
+        message: "bankStatements debe ser un objeto (puede estar vacío)",
+      });
+    }
+
+    if (typeof financialStatements !== "object" || financialStatements === null) {
+      return res.status(400).json({
+        error: "financialStatements inválido",
+        message: "financialStatements debe ser un objeto (puede estar vacío)",
+      });
+    }
+
+    const validTypes = ["capital_trabajo", "adquisicion_activos", "proyectos_inversion"];
+    if (!validTypes.includes(creditType)) {
+      return res.status(400).json({
+        error: "creditType inválido",
+        message: `Debe ser uno de: ${validTypes.join(", ")}`,
+      });
+    }
+
+    const workerPayload = {
+      creditType,
+      formalidad,
+      bankStatements,
+      financialStatements,
+      experienceYears,
+      creditScore,
+      esgScore,
+    };
+
+    const workerResponse = await fetch(`${WORKER_URL}/generate-master`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ bank_statements: bankStatements }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(workerPayload),
     });
 
     if (!workerResponse.ok) {
-      const errorText = await workerResponse.text();
-      console.error("Worker error:", errorText);
+      const errData = (await workerResponse.json().catch(() => ({}))) as { error?: string };
       return res.status(502).json({
-        error: "Worker error",
-        message: "Failed to extract bank statements",
-        details: errorText,
+        error: "Error del worker",
+        message: errData.error ?? "No se pudo generar el master",
       });
     }
 
-    const extractedData = (await workerResponse.json()) as Record<string, unknown>;
+    const result = (await workerResponse.json()) as { success?: boolean; file_base64?: string };
+    if (!result.success || !result.file_base64) {
+      return res.status(502).json({
+        error: "Respuesta inválida del worker",
+        message: "No se recibió el archivo generado",
+      });
+    }
 
-    // TODO: Aquí iría la lógica para generar el Excel con los datos extraídos
+    const buffer = Buffer.from(result.file_base64, "base64");
+    fs.writeFileSync(MASTER_FILE, buffer);
+
     return res.json({
       success: true,
-      message: "Excel generation kicked off",
-      extracted_data: extractedData,
+      message: "Master generado correctamente",
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error("Error in kickoff-excel-generation:", error);
+    console.error("Error en kickoff-master-generation:", error);
     return res.status(500).json({
       error: "Internal server error",
       message,
     });
   }
+});
+
+/**
+ * GET /get-master
+ * Descarga el archivo master_cliente.xlsx generado.
+ */
+app.get("/get-master", (_req: Request, res: Response) => {
+  if (!fs.existsSync(MASTER_FILE)) {
+    return res.status(404).json({
+      error: "Archivo no encontrado",
+      message: "Ejecuta primero kickoff-master-generation para generar el master",
+    });
+  }
+  res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  res.setHeader("Content-Disposition", 'attachment; filename="master_cliente.xlsx"');
+  res.sendFile(MASTER_FILE);
 });
 
 app.listen(PORT, () => {

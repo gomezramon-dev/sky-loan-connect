@@ -54,4 +54,11 @@ export const FORMALIDAD_TYPES = [
   },
 ] as const;
 
+export const FORMALIDAD_TO_NUMBER: Record<string, number> = {
+  total: 100,
+  parcial: 70,
+  basica: 50,
+  informal: 30,
+};
+
 export const ACCEPTED_FILE_TYPES = ".xlsx,.xls,.pdf,.csv";

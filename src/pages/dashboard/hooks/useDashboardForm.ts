@@ -4,8 +4,40 @@ import type {
   BankStatementFile,
   DashboardFormData,
   CreditTypeValue,
-  FormalidadValue,
+  BankStatementsPayload,
+  FinancialStatementsPayload,
 } from "../types";
+import { FORMALIDAD_TO_NUMBER } from "../constants";
+
+/** Read a File as base64 string */
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      const base64 = result.includes(",") ? result.split(",")[1] : result;
+      resolve(base64 ?? "");
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+/** Map currency from form to API (MXN/USD) */
+function toApiCurrency(c: "pesos" | "dolares" | undefined): string {
+  return c === "dolares" ? "USD" : "MXN";
+}
+
+/** Derive trimester from FinancialPeriod (0=completo, 1-4=Q1-Q4) */
+function getTrimester(period: FinancialPeriod): number {
+  if (period.type === "completo") return 0;
+  if (!period.endDate) return 0;
+  const month = period.endDate.getMonth(); // 0-11
+  if (month <= 2) return 1; // Q1 (marzo)
+  if (month <= 5) return 2; // Q2 (junio)
+  if (month <= 8) return 3; // Q3 (septiembre)
+  return 4; // Q4 (diciembre)
+}
 
 const EXPERIENCE_MIN = 0;
 const EXPERIENCE_MAX = 100;
@@ -188,16 +220,44 @@ export function useDashboardForm() {
 
   /**
    * Returns structured form data for extraction/pipeline consumption.
+   * Transforms bankStatements and financialPeriods to API format (base64).
    * Call only when isComplete is true.
    */
-  const getFormData = useCallback((): DashboardFormData | null => {
+  const getFormData = useCallback(async (): Promise<DashboardFormData | null> => {
     if (!isComplete) return null;
+
+    const bankStatementsPayload: BankStatementsPayload = {};
+    for (const f of bankStatements) {
+      if (!f.bank || !f.year || !f.month || !f.currency) continue;
+      const bank = f.bank.trim();
+      const currency = toApiCurrency(f.currency);
+      const periodKey = `${f.year}${f.month}`;
+      if (!bankStatementsPayload[bank]) {
+        bankStatementsPayload[bank] = {};
+      }
+      if (!bankStatementsPayload[bank][currency]) {
+        bankStatementsPayload[bank][currency] = {};
+      }
+      bankStatementsPayload[bank][currency][periodKey] = await fileToBase64(f.file);
+    }
+
+    const financialStatementsPayload: FinancialStatementsPayload = {};
+    for (const p of financialPeriods) {
+      if (p.estadoResultados.length === 0 || p.balanceGeneral.length === 0) continue;
+      const year = p.year;
+      financialStatementsPayload[year] = {
+        isComplete: p.type === "completo",
+        trimester: getTrimester(p),
+        incomeStatement: await fileToBase64(p.estadoResultados[0].file),
+        balanceSheet: await fileToBase64(p.balanceGeneral[0].file),
+      };
+    }
 
     return {
       creditType: creditType as CreditTypeValue,
-      formalidad: formalidad as FormalidadValue,
-      bankStatements,
-      financialPeriods,
+      formalidad: FORMALIDAD_TO_NUMBER[formalidad] ?? 0,
+      bankStatements: bankStatementsPayload,
+      financialStatements: financialStatementsPayload,
       experienceYears: Number(experienceYears),
       creditScore: Number(creditScore),
       esgScore: Number(esgScore),

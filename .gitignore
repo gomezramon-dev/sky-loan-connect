@@ -1,3 +1,12 @@
+# ============ General ============
+*.local
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
 # Logs
 logs
 *.log
@@ -7,18 +16,40 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
+# Editor
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+
+# ============ Frontend (src/) ============
+node_modules
+dist
+dist-ssr
+*.tsbuildinfo
+
+# ============ Server ============
+server/node_modules
+server/dist
+server/data/
+server/*.db
+
+# ============ Worker (Python) ============
+worker/.venv
+worker/venv
+worker/__pycache__/
+worker/**/__pycache__/
+worker/*.py[cod]
+worker/**/*.py[cod]
+worker/.pytest_cache/
+worker/.mypy_cache/
+worker/.ruff_cache/
+worker/*.egg-info/
+worker/.eggs/
+worker/build/
+worker/dist/
+
+# Env (mantener .example en repo)
+.env
+.env.*
+!.env.example
+!**/.env.example

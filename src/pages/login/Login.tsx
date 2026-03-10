@@ -22,7 +22,7 @@ export default function Login() {
             onPasswordChange={form.setPassword}
             onTogglePassword={() => form.setShowPassword(!form.showPassword)}
             onSubmit={form.handleSubmit}
-            // hint="Admin: admin@sky-loan.com / Admin123!"
+            hint="Admin: admin@sky-loan.com / Admin123!"
           />
         </div>
       </div>

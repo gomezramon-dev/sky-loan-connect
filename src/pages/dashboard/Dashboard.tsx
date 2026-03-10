@@ -2,8 +2,8 @@ import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { kickoffMasterGeneration, downloadMasterFile } from "@/lib/api";
 import { useDashboardForm } from "./hooks/useDashboardForm";
-import { generateExcelFromFormData } from "./utils/generateExcel";
 import {
   DashboardHeader,
   CompletionProgress,
@@ -24,7 +24,7 @@ export default function Dashboard() {
   const form = useDashboardForm();
 
   const handleGenerate = useCallback(async () => {
-    const data = form.getFormData();
+    const data = await form.getFormData();
     if (!data) return;
 
     form.setGenerating(true);
@@ -34,12 +34,28 @@ export default function Dashboard() {
     });
 
     try {
-      await new Promise((r) => setTimeout(r, 2000));
-      generateExcelFromFormData(data);
+      await kickoffMasterGeneration({
+        creditType: data.creditType,
+        formalidad: data.formalidad,
+        bankStatements: data.bankStatements,
+        financialStatements: data.financialStatements,
+        experienceYears: data.experienceYears,
+        creditScore: data.creditScore,
+        esgScore: data.esgScore,
+      });
+
+      const blob = await downloadMasterFile();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "master_cliente.xlsx";
+      a.click();
+      URL.revokeObjectURL(url);
+
       form.setGenerated(true);
       toast({
         title: "¡Documento generado!",
-        description: "El archivo Excel se descargó automáticamente.",
+        description: "El archivo master_cliente.xlsx se descargó automáticamente.",
       });
     } catch (error) {
       const message =

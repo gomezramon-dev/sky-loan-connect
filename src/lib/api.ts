@@ -65,6 +65,21 @@ async function fetchWithAuth(
   return res;
 }
 
+export async function logout(): Promise<void> {
+  const refreshToken = localStorage.getItem("refreshToken");
+  if (refreshToken) {
+    try {
+      await fetch(`${API_BASE}/auth/logout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+      });
+    } catch {
+      // Ignorar errores de red; limpiar local de todas formas
+    }
+  }
+}
+
 export async function login(email: string, password: string): Promise<LoginResponse> {
   const res = await fetch(`${API_BASE}/auth/login`, {
     method: "POST",
@@ -109,6 +124,58 @@ export async function updateUser(id: number, data: { email?: string; password?: 
     throw new Error(err.error ?? "Failed to update user");
   }
   return res.json() as Promise<User>;
+}
+
+/**
+ * Bank statements (Estado de Cuenta) format for API.
+ * { "BankName": { "MXN"|"USD": { "YYYYMM": "base64..." } } }
+ */
+export type BankStatementsPayload = Record<
+  string,
+  Record<string, Record<string, string>>
+>;
+
+/**
+ * Financial statements (Estados Financieros) format for API.
+ * { "YYYY": { isComplete, trimester, incomeStatement, balanceSheet } }
+ */
+export interface FinancialStatementYear {
+  isComplete: boolean;
+  trimester: number;
+  incomeStatement: string;
+  balanceSheet: string;
+}
+
+export type FinancialStatementsPayload = Record<string, FinancialStatementYear>;
+
+export interface MasterGenerationPayload {
+  creditType: "capital_trabajo" | "adquisicion_activos" | "proyectos_inversion";
+  formalidad: number;
+  bankStatements: BankStatementsPayload;
+  financialStatements: FinancialStatementsPayload;
+  experienceYears: number;
+  creditScore: number;
+  esgScore: number;
+}
+
+export async function kickoffMasterGeneration(payload: MasterGenerationPayload): Promise<void> {
+  const res = await fetchWithAuth(`${API_BASE}/kickoff-master-generation`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = (await res.json().catch(() => ({}))) as ApiError;
+    throw new Error(err.error ?? err.message ?? "Error al generar master");
+  }
+}
+
+export async function downloadMasterFile(): Promise<Blob> {
+  const res = await fetchWithAuth(`${API_BASE}/get-master`);
+  if (!res.ok) {
+    const err = (await res.json().catch(() => ({}))) as ApiError;
+    throw new Error(err.error ?? err.message ?? "No se pudo descargar el archivo");
+  }
+  return res.blob();
 }
 
 export async function deleteUser(id: number): Promise<void> {

@@ -33,10 +33,18 @@ export function verifyAccessToken(token: string): JwtPayload | null {
 
 export function verifyRefreshToken(token: string): JwtPayload | null {
   try {
+    if (refreshTokenBlacklist.has(token)) return null;
     return jwt.verify(token, JWT_REFRESH_SECRET) as JwtPayload;
   } catch {
     return null;
   }
+}
+
+// Blacklist de refresh tokens invalidados al hacer logout
+const refreshTokenBlacklist = new Set<string>();
+
+export function blacklistRefreshToken(token: string): void {
+  refreshTokenBlacklist.add(token);
 }
 
 export interface AuthRequest extends Request {

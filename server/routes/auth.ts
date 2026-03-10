@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import { db } from "../db.js";
-import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../auth.js";
+import { signAccessToken, signRefreshToken, verifyRefreshToken, blacklistRefreshToken } from "../auth.js";
 
 const router = Router();
 
@@ -58,6 +58,14 @@ router.post("/refresh", (req: Request, res: Response) => {
     refreshToken: newRefreshToken,
     user: { id: user.id, email: user.email, role: user.role },
   });
+});
+
+router.post("/logout", (req: Request, res: Response) => {
+  const { refreshToken } = req.body;
+  if (refreshToken && typeof refreshToken === "string") {
+    blacklistRefreshToken(refreshToken);
+  }
+  res.status(200).json({ message: "Sesión cerrada correctamente" });
 });
 
 export default router;

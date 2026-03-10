@@ -6,13 +6,13 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
-import { login as apiLogin, type User } from "@/lib/api";
+import { login as apiLogin, logout as apiLogout, type User } from "@/lib/api";
 
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   setUser: (u: User | null) => void;
 }
 
@@ -22,7 +22,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    await apiLogout();
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     setUser(null);

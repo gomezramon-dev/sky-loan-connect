@@ -1,15 +1,23 @@
-import { useState } from "react";
-import Login from "@/pages/Login";
-import Dashboard from "@/pages/Dashboard";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import Login from "@/pages/login/Login";
 
 const Index = () => {
-  const [authenticated, setAuthenticated] = useState(false);
+  const { user, loading } = useAuth();
 
-  if (!authenticated) {
-    return <Login onLogin={() => setAuthenticated(true)} />;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
   }
 
-  return <Dashboard onLogout={() => setAuthenticated(false)} />;
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <Login />;
 };
 
 export default Index;
